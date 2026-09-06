@@ -1,0 +1,203 @@
+import React, { useState } from 'react';
+import { Download, Trash2 } from 'lucide-react';
+
+const formatRupiah = (number) => {
+  if (isNaN(number) || number === null || number === '') return 'Rp.0';
+  return 'Rp.' + Number(number).toLocaleString('id-ID');
+};
+
+const TransactionTable = ({ category, data, onResetAll }) => {
+  const [tempStartDate, setTempStartDate] = useState('');
+  const [tempEndDate, setTempEndDate] = useState('');
+  const [tempProduct, setTempProduct] = useState('');
+
+  const [activeStartDate, setActiveStartDate] = useState('');
+  const [activeEndDate, setActiveEndDate] = useState('');
+  const [activeProduct, setActiveProduct] = useState('');
+
+  const uniqueProducts = [...new Set(data.map(item => item.produk))];
+
+  const handleApplyFilter = () => {
+    setActiveStartDate(tempStartDate);
+    setActiveEndDate(tempEndDate);
+    setActiveProduct(tempProduct);
+  };
+
+  const handleResetFilter = () => {
+    setTempStartDate('');
+    setTempEndDate('');
+    setTempProduct('');
+    setActiveStartDate('');
+    setActiveEndDate('');
+    setActiveProduct('');
+  };
+  
+  const handleResetAllData = () => {
+    if (window.confirm('Yakin ingin menghapus semua data? Aksi ini tidak dapat dibatalkan.')) {
+      if (onResetAll) onResetAll();
+    }
+  };
+
+  const filteredData = data.filter(row => {
+    let matches = true;
+    if (activeStartDate || activeEndDate) {
+      const rowDate = new Date(row.tglBooking);
+      const start = activeStartDate ? new Date(activeStartDate) : new Date(-8640000000000000);
+      const end = activeEndDate ? new Date(activeEndDate) : new Date(8640000000000000);
+      if (rowDate < start || rowDate > end) matches = false;
+    }
+    if (activeProduct && row.produk !== activeProduct) {
+      matches = false;
+    }
+    return matches;
+  });
+
+  const exportToCSV = () => {
+    const headers = ["No", "Nama Client", "Tanggal Booking", "Tanggal Hari H", "Vendor", "Produk", "Kategori", "Down Payment", "Harga Produk", "Selisih", "Catatan", "Status"];
+    const csvRows = [headers.join(',')];
+    
+    filteredData.forEach((row, index) => {
+      const selisih = row.harga - row.dp;
+      const values = [
+        index + 1,
+        `"${row.client}"`,
+        `"${row.tglBooking}"`,
+        `"${row.tglHariH}"`,
+        `"${row.vendor}"`,
+        `"${row.produk}"`,
+        `"${row.kategori}"`,
+        row.dp,
+        row.harga,
+        selisih,
+        `"${row.catatan}"`,
+        `"${row.status}"`
+      ];
+      csvRows.push(values.join(','));
+    });
+    
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Data_Transaksi_${category}_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="animate-fade-in" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div className="page-header">
+        <h1 className="page-title">Data {category}</h1>
+        <p className="page-subtitle">Tabel pencatatan transaksi untuk divisi {category}</p>
+      </div>
+
+      <div className="glass-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-glass)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
+            
+            {/* LEFT SIDE: FILTER CONTROLS */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'flex-end' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.85rem' }}>Dari Tanggal</label>
+                <input type="date" className="form-control" style={{ padding: '0.5rem', width: '150px' }} value={tempStartDate} onChange={(e) => setTempStartDate(e.target.value)} />
+              </div>
+              
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.85rem' }}>Sampai Tanggal</label>
+                <input type="date" className="form-control" style={{ padding: '0.5rem', width: '150px' }} value={tempEndDate} onChange={(e) => setTempEndDate(e.target.value)} />
+              </div>
+              
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.85rem' }}>Produk</label>
+                <select className="form-control" style={{ padding: '0.5rem', width: '180px' }} value={tempProduct} onChange={(e) => setTempProduct(e.target.value)}>
+                  <option value="">Semua Produk</option>
+                  {uniqueProducts.map((prod, idx) => (
+                    <option key={idx} value={prod}>{prod}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '0.5rem', paddingBottom: '0.2rem' }}>
+                <button className="btn btn-primary" onClick={handleApplyFilter} style={{ padding: '0.5rem 1rem' }}>
+                  Terapkan
+                </button>
+                <button className="btn" onClick={handleResetFilter} style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.1)', color: 'var(--text-main)' }}>
+                  Reset
+                </button>
+              </div>
+            </div>
+            
+            {/* RIGHT SIDE: ACTIONS */}
+            <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', paddingBottom: '0.2rem' }}>
+              <span style={{ fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.9rem', marginRight: '0.5rem' }}>
+                Total: {filteredData.length} Data
+              </span>
+              <button className="btn btn-primary" onClick={exportToCSV} style={{ padding: '0.5rem 1rem' }}>
+                <Download size={16} /> Export
+              </button>
+              <button className="btn btn-danger" onClick={handleResetAllData} style={{ padding: '0.5rem 1rem', background: '#ef4444', color: 'white' }}>
+                <Trash2 size={16} /> Reset Data
+              </button>
+            </div>
+            
+          </div>
+        </div>
+        
+        <div className="table-container" style={{ overflowX: 'auto', flex: 1 }}>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Nama Client</th>
+                <th>Tanggal Booking</th>
+                <th>Tanggal Hari H</th>
+                <th>Vendor</th>
+                <th>Produk</th>
+                <th>Kategori</th>
+                <th>Down Payment</th>
+                <th>Harga Produk</th>
+                <th>Selisih</th>
+                <th>Catatan</th>
+                <th>Status</th>
+                <th>Check 1</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredData.map((row, index) => {
+                const selisih = row.harga - row.dp;
+                const statusColor = row.status === 'LUNAS' ? 'bg-success' : (row.status === 'DP' ? 'bg-warning' : 'bg-danger');
+
+                return (
+                  <tr key={row.id}>
+                    <td>{index + 1}</td>
+                    <td style={{ fontWeight: 500, color: 'var(--text-main)' }}>{row.client}</td>
+                    <td>{row.tglBooking}</td>
+                    <td>{row.tglHariH}</td>
+                    <td>{row.vendor}</td>
+                    <td><span className="badge badge-product">{row.produk}</span></td>
+                    <td>{row.kategori}</td>
+                    <td>{formatRupiah(row.dp)}</td>
+                    <td>{formatRupiah(row.harga)}</td>
+                    <td>{formatRupiah(selisih)}</td>
+                    <td>{row.catatan}</td>
+                    <td>
+                      <span className={`status-badge ${statusColor}`}>
+                        {row.status}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <input type="checkbox" defaultChecked={row.check1} className="custom-checkbox" />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TransactionTable;
