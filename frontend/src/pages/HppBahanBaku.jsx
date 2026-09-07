@@ -22,6 +22,11 @@ const HppBahanBaku = ({ category }) => {
       .eq('category', category)
       .order('created_at', { ascending: true });
 
+    if (error) {
+      console.error('Supabase error:', error);
+      alert('Error fetching data: ' + error.message);
+    }
+
     if (!error) setBahanBaku(data || []);
     setLoading(false);
   }, [category]);
