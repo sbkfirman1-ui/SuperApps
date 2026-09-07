@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Loader from '../components/Loader';
 import { supabase } from '../lib/supabase';
 import { getMasterData, DEFAULT_FINANCE_CATEGORIES } from '../utils/masterData';
 
@@ -171,7 +172,7 @@ const PnlReport = ({ category }) => {
 
       <div className="glass-panel" style={{ flex: 1, overflowX: 'auto', padding: '1rem' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Memuat data...</div>
+          <Loader text="Memuat data..." />
         ) : (
           <table className="data-table pnl-table" style={{ whiteSpace: 'nowrap', minWidth: '1200px' }}>
             <thead>

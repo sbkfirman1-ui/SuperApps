@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import Loader from '../components/Loader';
 import { supabase } from '../lib/supabase';
 
 const formatRupiah = (number) => {
@@ -78,7 +79,7 @@ const PriceBook = ({ category }) => {
   if (loading) {
     return (
       <div className="animate-fade-in" style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-        <div style={{ fontSize: '1.2rem' }}>⏳ Memuat Price Book {category}...</div>
+        <Loader text="Memuat Price Book {category}..." />
       </div>
     );
   }

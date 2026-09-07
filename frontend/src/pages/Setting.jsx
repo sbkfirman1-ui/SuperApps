@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Loader from '../components/Loader';
 import { Plus, Trash2, Edit2, Save, X, Check } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { 
@@ -85,7 +86,7 @@ const Setting = () => {
           </thead>
           <tbody>
             {loadingPackages ? (
-              <tr><td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Memuat data...</td></tr>
+              <tr><td colSpan="4" style={{ padding: 0 }}><Loader text="Memuat data..." /></td></tr>
             ) : data.length === 0 ? (
               <tr><td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Belum ada paket</td></tr>
             ) : data.map(pkg => {

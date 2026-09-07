@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import Loader from '../components/Loader';
 import { supabase } from '../lib/supabase';
 import TransactionTable from '../components/TransactionTable';
 import { getMasterData, setMasterData } from '../utils/masterData';
@@ -67,7 +68,7 @@ const Studio = () => {
     return (
       <div className="page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
         <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-          <div style={{ fontSize: '1.2rem', marginBottom: '0.5rem' }}>⏳ Memuat data Studio...</div>
+          <Loader text="Memuat data Studio..." />
         </div>
       </div>
     );

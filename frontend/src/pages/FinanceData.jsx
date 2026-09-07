@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import Loader from '../components/Loader';
 import { supabase } from '../lib/supabase';
 import FinanceTable from '../components/FinanceTable';
 
@@ -64,7 +65,7 @@ const FinanceData = ({ category }) => {
     return (
       <div className="page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
         <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-          <div style={{ fontSize: '1.2rem' }}>⏳ Memuat data Finance {category}...</div>
+          <Loader text="Memuat data Finance {category}..." />
         </div>
       </div>
     );

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, Edit2, Check, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import Loader from '../components/Loader';
 
 const formatRupiah = (number) => {
   if (isNaN(number) || number === null || number === '') return 'Rp.0';
@@ -96,7 +97,7 @@ const HppBahanBaku = ({ category }) => {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Memuat data dari database...</td></tr>
+                <tr><td colSpan="5" style={{ padding: 0 }}><Loader text="Memuat data dari database..." /></td></tr>
               ) : bahanBaku.map((item, idx) => (
                 <tr key={item.id}>
                   <td>{idx + 1}</td>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Loader from '../components/Loader';
 import { 
   DollarSign, ShoppingCart, CreditCard, TrendingUp,
   PieChart as PieChartIcon, CheckCircle, Clock, XCircle, Calendar, Filter, X
@@ -268,7 +269,7 @@ const Dashboard = ({ category }) => {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>⏳ Memuat data dari database...</div>
+        <Loader text="Memuat data dari database..." />
       ) : (
         <>
           {/* SECTION: PERFORMA KEUANGAN */}

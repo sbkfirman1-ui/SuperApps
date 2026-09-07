@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import Loader from '../components/Loader';
 import { createPortal } from 'react-dom';
 import { Plus, Trash2, Edit2, Check, X, ChevronDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -231,7 +232,7 @@ const HppProduk = ({ category }) => {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="11" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Memuat data dari database...</td></tr>
+                <tr><td colSpan="11" style={{ padding: 0 }}><Loader text="Memuat data dari database..." /></td></tr>
               ) : packages.map((pkg) => {
                 const summary = calculateSummary(pkg);
                 const rowCount = Math.max(pkg.items.length, 1);
