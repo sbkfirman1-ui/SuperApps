@@ -9,9 +9,9 @@ const Sidebar = () => {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-logo">
-        <Camera size={28} className="text-primary" />
-        <span>Super</span>Apps
+      <div className="sidebar-logo" style={{ flexDirection: 'column', alignItems: 'center', justifyContent: 'center', margin: '1rem auto 2.5rem', textAlign: 'center', gap: '0.75rem' }}>
+        <img src="/logo.png" alt="Lakiphoto Logo" style={{ height: '55px', objectFit: 'contain', background: 'white', padding: '0.2rem', borderRadius: '0.5rem' }} />
+        <div style={{ fontSize: '1.1rem', lineHeight: '1.2', color: 'var(--text-main)' }}>Data Base<br /><span style={{ color: '#0ea5e9', fontSize: '1.2rem', fontWeight: 'bold' }}>Lakiphoto</span></div>
       </div>
       
       <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
@@ -50,7 +50,7 @@ const Sidebar = () => {
         <div className="nav-group">
           <div className="nav-link-wrapper">
             <div className="nav-link" style={{ flex: 1, cursor: 'pointer', paddingRight: 0 }} onClick={() => setIsFinanceOpen(!isFinanceOpen)}>
-              <DollarSign size={20} /> Input Finance
+              <DollarSign size={20} /> Finance
             </div>
             <button className="toggle-btn" onClick={(e) => { e.preventDefault(); setIsFinanceOpen(!isFinanceOpen); }}>
               {isFinanceOpen ? <Minus size={16} /> : <Plus size={16} />}
@@ -58,13 +58,28 @@ const Sidebar = () => {
           </div>
           
           <div className={`sub-menu-container ${isFinanceOpen ? 'open' : ''}`}>
-            <div className="sub-menu-inner">
-              <NavLink to="/finance-data/wedding" className={({ isActive }) => `nav-link nav-link-sub ${isActive ? 'active' : ''}`}>
-                Wedding
+            <div className="sub-menu-inner" style={{ gap: '0.5rem' }}>
+              
+              <NavLink to="/finance" className={({ isActive }) => `nav-link nav-link-sub ${isActive ? 'active' : ''}`}>
+                Input Finance (Form)
               </NavLink>
-              <NavLink to="/finance-data/studio" className={({ isActive }) => `nav-link nav-link-sub ${isActive ? 'active' : ''}`}>
-                Studio
+
+              <div style={{ padding: '0.5rem 1rem 0.2rem', fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Wedding</div>
+              <NavLink to="/finance/wedding/data" className={({ isActive }) => `nav-link nav-link-sub ${isActive ? 'active' : ''}`} style={{ paddingLeft: '2rem' }}>
+                Data Finance
               </NavLink>
+              <NavLink to="/finance/wedding/pnl" className={({ isActive }) => `nav-link nav-link-sub ${isActive ? 'active' : ''}`} style={{ paddingLeft: '2rem' }}>
+                PNL Wedding
+              </NavLink>
+
+              <div style={{ padding: '0.5rem 1rem 0.2rem', fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Studio</div>
+              <NavLink to="/finance/studio/data" className={({ isActive }) => `nav-link nav-link-sub ${isActive ? 'active' : ''}`} style={{ paddingLeft: '2rem' }}>
+                Data Finance
+              </NavLink>
+              <NavLink to="/finance/studio/pnl" className={({ isActive }) => `nav-link nav-link-sub ${isActive ? 'active' : ''}`} style={{ paddingLeft: '2rem' }}>
+                PNL Studio
+              </NavLink>
+
             </div>
           </div>
         </div>
@@ -89,6 +104,9 @@ const Sidebar = () => {
               <NavLink to="/hpp/wedding/produk" className={({ isActive }) => `nav-link nav-link-sub ${isActive ? 'active' : ''}`} style={{ paddingLeft: '2rem' }}>
                 HPP Produk
               </NavLink>
+              <NavLink to="/hpp/wedding/price-book" className={({ isActive }) => `nav-link nav-link-sub ${isActive ? 'active' : ''}`} style={{ paddingLeft: '2rem' }}>
+                Price Book Wedding
+              </NavLink>
 
               <div style={{ padding: '0.5rem 1rem 0.2rem', fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Studio</div>
               <NavLink to="/hpp/studio/bahan-baku" className={({ isActive }) => `nav-link nav-link-sub ${isActive ? 'active' : ''}`} style={{ paddingLeft: '2rem' }}>
@@ -96,6 +114,9 @@ const Sidebar = () => {
               </NavLink>
               <NavLink to="/hpp/studio/produk" className={({ isActive }) => `nav-link nav-link-sub ${isActive ? 'active' : ''}`} style={{ paddingLeft: '2rem' }}>
                 HPP Produk
+              </NavLink>
+              <NavLink to="/hpp/studio/price-book" className={({ isActive }) => `nav-link nav-link-sub ${isActive ? 'active' : ''}`} style={{ paddingLeft: '2rem' }}>
+                Price Book Studio
               </NavLink>
 
             </div>

@@ -41,7 +41,7 @@
 }
 
 .nav-link:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--overlay-bg-hover);
   color: var(--text-main);
 }
 
@@ -78,7 +78,7 @@
 }
 
 .toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--overlay-border);
   color: var(--text-main);
 }
 
@@ -123,6 +123,8 @@
   font-size: 2rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
+  text-shadow: 0 0 15px var(--primary-glow);
+  animation: pulseGlow 2.5s ease-in-out infinite alternate;
 }
 
 .page-subtitle {
@@ -227,7 +229,7 @@
 }
 
 .form-control {
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--input-bg);
   border: 1px solid var(--border-glass);
   border-radius: var(--radius-sm);
   padding: 0.85rem 1rem;
@@ -241,11 +243,11 @@
 .form-control:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px var(--primary-glow);
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--input-focus);
 }
 
 .form-control:disabled, .form-control[readonly] {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--overlay-bg);
   color: #9ca3af;
   cursor: not-allowed;
   border-color: transparent;
@@ -315,13 +317,13 @@ input[type="number"] {
 }
 
 .data-table th {
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--input-focus);
   padding: 1rem 1.25rem;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-muted);
   border-bottom: 1px solid var(--border-glass);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  border-right: 1px solid var(--overlay-bg-hover);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -331,8 +333,8 @@ input[type="number"] {
   padding: 1rem 1.25rem;
   font-size: 0.9rem;
   color: #d1d5db;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  border-right: 1px solid rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--overlay-bg-hover);
+  border-right: 1px solid var(--overlay-bg);
 }
 
 .data-table tbody tr {
@@ -340,7 +342,7 @@ input[type="number"] {
 }
 
 .data-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--overlay-bg);
 }
 
 .inline {
@@ -362,8 +364,8 @@ input[type="number"] {
 }
 
 .badge-product {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--overlay-border);
+  border: 1px solid var(--overlay-light);
 }
 
 .status-badge {
@@ -377,21 +379,21 @@ input[type="number"] {
 }
 
 .bg-success {
-  background: rgba(16, 185, 129, 0.15);
+  background: var(--success-bg);
   color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: 1px solid var(--success-border);
 }
 
 .bg-warning {
-  background: rgba(245, 158, 11, 0.15);
+  background: var(--warning-bg);
   color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  border: 1px solid var(--warning-border);
 }
 
 .bg-danger {
-  background: rgba(239, 68, 68, 0.15);
+  background: var(--danger-bg);
   color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  border: 1px solid var(--danger-border);
 }
 
 .custom-checkbox {

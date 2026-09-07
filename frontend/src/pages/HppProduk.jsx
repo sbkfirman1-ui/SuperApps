@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Edit2, Check, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { Plus, Trash2, Edit2, Check, X, ChevronDown } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 const formatRupiah = (number) => {
   if (isNaN(number) || number === null || number === '') return 'Rp.0';
@@ -11,116 +13,193 @@ const formatPercent = (decimal) => {
   return (decimal * 100).toFixed(2) + '%';
 };
 
+const CustomSelect = ({ value, placeholder, options, onChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const triggerRef = React.useRef(null);
+  const [menuCoords, setMenuCoords] = useState({ top: 0, left: 0, width: 0 });
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const selectedLabel = options.find(o => o.value === value)?.label || placeholder;
+
+  const handleToggle = () => {
+    if (!isOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setMenuCoords({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width
+      });
+      setSearchQuery(''); // Reset search on open
+    }
+    setIsOpen(!isOpen);
+  };
+
+  const filteredOptions = options.filter(o => 
+    o.label.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div style={{ width: '100%', height: '100%' }}>
+      <div 
+        ref={triggerRef}
+        onClick={handleToggle}
+        style={{ 
+          display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'space-between',
+          padding: '0.75rem 1rem', background: 'transparent',
+          cursor: 'pointer', fontSize: '0.9rem', color: value ? 'var(--text-main)' : 'var(--text-muted)'
+        }}
+      >
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedLabel}</span>
+        <ChevronDown size={14} style={{ flexShrink: 0 }} />
+      </div>
+
+      {isOpen && createPortal(
+        <div style={{ position: 'relative', zIndex: 9999 }}>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setIsOpen(false)} />
+          <div style={{ 
+            position: 'fixed', top: menuCoords.top, left: menuCoords.left, width: menuCoords.width,
+            background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)',
+            borderRadius: '0.5rem', padding: '0.5rem', zIndex: 50,
+            maxHeight: '300px', display: 'flex', flexDirection: 'column',
+            boxShadow: '0 10px 25px -5px var(--overlay-darker)'
+          }}>
+            <div style={{ padding: '0.25rem 0.5rem', borderBottom: '1px solid var(--border-glass)', marginBottom: '0.5rem' }}>
+              <input
+                type="text"
+                autoFocus
+                placeholder="Cari bahan baku..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: '100%', padding: '0.5rem', background: 'var(--input-bg)',
+                  border: '1px solid var(--border-glass)', borderRadius: '0.25rem',
+                  color: 'var(--text-main)', fontSize: '0.85rem', outline: 'none'
+                }}
+              />
+            </div>
+            <div style={{ overflowY: 'auto', flex: 1 }}>
+              {filteredOptions.length > 0 ? filteredOptions.map(o => (
+                <div 
+                  key={o.value}
+                  onClick={() => { onChange(o.value); setIsOpen(false); }}
+                  style={{
+                    padding: '0.6rem 1rem', cursor: 'pointer', borderRadius: '0.3rem',
+                    background: o.value === value ? 'var(--primary)' : 'transparent',
+                    color: o.value === value ? '#fff' : 'var(--text-main)',
+                    transition: 'background 0.2s',
+                    marginBottom: '0.1rem',
+                    fontSize: '0.9rem',
+                    whiteSpace: 'nowrap'
+                  }}
+                  onMouseEnter={e => { if (o.value !== value) e.target.style.background = 'var(--overlay-bg-hover)' }}
+                  onMouseLeave={e => { if (o.value !== value) e.target.style.background = 'transparent' }}
+                >
+                  {o.label}
+                </div>
+              )) : (
+                <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                  Tidak ditemukan
+                </div>
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+};
+
 const HppProduk = ({ category }) => {
   const [packages, setPackages] = useState([]);
   const [bahanBaku, setBahanBaku] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [newPkgName, setNewPkgName] = useState('');
+  const [newPkgHarga, setNewPkgHarga] = useState('');
+  const [editPkgId, setEditPkgId] = useState(null);
+  const [editPkgForm, setEditPkgForm] = useState({ name: '', hargaJual: '' });
 
-  // Load data
-  useEffect(() => {
-    try {
-      const savedPackages = localStorage.getItem(`hppPackages_${category}`);
-      if (savedPackages) setPackages(JSON.parse(savedPackages));
-      
-      const savedBahanBaku = localStorage.getItem(`hppBahanBaku_${category}`);
-      if (savedBahanBaku) setBahanBaku(JSON.parse(savedBahanBaku));
-    } catch (e) {
-      console.error(e);
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    const [{ data: pkgData }, { data: bbData }] = await Promise.all([
+      supabase.from('hpp_packages').select('*, hpp_package_items(*, hpp_bahan_baku(*))').eq('category', category).order('created_at', { ascending: true }),
+      supabase.from('hpp_bahan_baku').select('*').eq('category', category).order('created_at', { ascending: true }),
+    ]);
+
+    if (pkgData) {
+      const normalized = pkgData.map(pkg => ({
+        ...pkg,
+        items: (pkg.hpp_package_items || []).map(item => ({
+          id: item.id,
+          bahanBakuId: item.bahan_baku_id,
+          qty: item.qty,
+          bb: item.hpp_bahan_baku
+        }))
+      }));
+      setPackages(normalized);
     }
+    if (bbData) setBahanBaku(bbData);
+    setLoading(false);
   }, [category]);
 
-  // Save packages
-  useEffect(() => {
-    localStorage.setItem(`hppPackages_${category}`, JSON.stringify(packages));
-  }, [packages, category]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Calculate package summary
   const calculateSummary = (pkg) => {
     const totalHpp = pkg.items.reduce((sum, item) => {
-      const bb = bahanBaku.find(b => b.id === item.bahanBakuId);
-      return sum + (bb ? bb.price * item.qty : 0);
+      return sum + (item.bb ? Number(item.bb.price) * item.qty : 0);
     }, 0);
-
     const margin = pkg.hargaJual - totalHpp;
     const hppPersen = pkg.hargaJual > 0 ? totalHpp / pkg.hargaJual : 0;
     const marginPersen = pkg.hargaJual > 0 ? margin / pkg.hargaJual : 0;
-
     return { totalHpp, margin, hppPersen, marginPersen };
   };
 
-  // Add new package
-  const [newPkgName, setNewPkgName] = useState('');
-  const [newPkgHarga, setNewPkgHarga] = useState('');
-
-  const handleAddPackage = () => {
+  const handleAddPackage = async () => {
     if (!newPkgName || !newPkgHarga) return;
-    setPackages([
-      ...packages,
-      {
-        id: Date.now(),
-        name: newPkgName,
-        hargaJual: Number(newPkgHarga),
-        isActive: true,
-        items: []
-      }
-    ]);
+    await supabase.from('hpp_packages').insert([{
+      category,
+      name: newPkgName,
+      hargaJual: Number(newPkgHarga),
+    }]);
     setNewPkgName('');
     setNewPkgHarga('');
+    fetchData();
   };
 
-  const handleDeletePackage = (id) => {
+  const handleDeletePackage = async (id) => {
     if (window.confirm('Hapus paket ini beserta isinya?')) {
-      setPackages(packages.filter(p => p.id !== id));
+      await supabase.from('hpp_packages').delete().eq('id', id);
+      fetchData();
     }
   };
 
-  // Package Edit
-  const [editPkgId, setEditPkgId] = useState(null);
-  const [editPkgForm, setEditPkgForm] = useState({ name: '', hargaJual: '' });
-  
-  const startEditPkg = (pkg) => {
-    setEditPkgId(pkg.id);
-    setEditPkgForm({ name: pkg.name, hargaJual: pkg.hargaJual });
-  };
-  const saveEditPkg = (id) => {
-    setPackages(packages.map(p => p.id === id ? { ...p, name: editPkgForm.name, hargaJual: Number(editPkgForm.hargaJual) } : p));
+  const saveEditPkg = async (id) => {
+    await supabase.from('hpp_packages').update({
+      name: editPkgForm.name,
+      hargaJual: Number(editPkgForm.hargaJual)
+    }).eq('id', id);
     setEditPkgId(null);
+    fetchData();
   };
 
-  // Add Item to Package
-  const handleAddItem = (pkgId, bahanBakuId) => {
+  const handleAddItem = async (pkgId, bahanBakuId) => {
     if (!bahanBakuId) return;
-    setPackages(packages.map(pkg => {
-      if (pkg.id === pkgId) {
-        return {
-          ...pkg,
-          items: [...pkg.items, { id: Date.now(), bahanBakuId: Number(bahanBakuId), qty: 1 }]
-        };
-      }
-      return pkg;
-    }));
+    await supabase.from('hpp_package_items').insert([{
+      package_id: pkgId,
+      bahan_baku_id: bahanBakuId,
+      qty: 1,
+    }]);
+    fetchData();
   };
 
-  // Update Item Qty
-  const handleUpdateItemQty = (pkgId, itemId, newQty) => {
-    setPackages(packages.map(pkg => {
-      if (pkg.id === pkgId) {
-        return {
-          ...pkg,
-          items: pkg.items.map(item => item.id === itemId ? { ...item, qty: Number(newQty) } : item)
-        };
-      }
-      return pkg;
-    }));
+  const handleUpdateItemQty = async (itemId, newQty) => {
+    await supabase.from('hpp_package_items').update({ qty: Number(newQty) }).eq('id', itemId);
+    fetchData();
   };
 
-  // Delete Item from Package
-  const handleDeleteItem = (pkgId, itemId) => {
-    setPackages(packages.map(pkg => {
-      if (pkg.id === pkgId) {
-        return { ...pkg, items: pkg.items.filter(i => i.id !== itemId) };
-      }
-      return pkg;
-    }));
+  const handleDeleteItem = async (itemId) => {
+    await supabase.from('hpp_package_items').delete().eq('id', itemId);
+    fetchData();
   };
 
   return (
@@ -132,7 +211,7 @@ const HppProduk = ({ category }) => {
 
       <div className="glass-panel" style={{ padding: '2rem' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem', color: 'var(--text-main)' }}>Kalkulasi HPP Produk</h2>
-        
+
         <div className="table-container" style={{ marginBottom: '2rem', overflowX: 'auto' }}>
           <table className="data-table" style={{ minWidth: '1000px', fontSize: '0.9rem' }}>
             <thead>
@@ -151,64 +230,56 @@ const HppProduk = ({ category }) => {
               </tr>
             </thead>
             <tbody>
-              {packages.map((pkg) => {
+              {loading ? (
+                <tr><td colSpan="11" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Memuat data dari database...</td></tr>
+              ) : packages.map((pkg) => {
                 const summary = calculateSummary(pkg);
                 const rowCount = Math.max(pkg.items.length, 1);
-                
                 return (
                   <React.Fragment key={pkg.id}>
-                    {/* Render first row which contains the rowSpan cells */}
                     <tr style={{ borderTop: '2px solid var(--border-glass)' }}>
-                      <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', background: 'rgba(0,0,0,0.1)' }}>
+                      <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', background: 'var(--overlay-dark)' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                           {editPkgId === pkg.id ? (
                             <>
-                              <input type="text" className="form-control" style={{ padding: '0.3rem' }} value={editPkgForm.name} onChange={e => setEditPkgForm({...editPkgForm, name: e.target.value})} />
+                              <input type="text" className="form-control" style={{ padding: '0.3rem' }} value={editPkgForm.name} onChange={e => setEditPkgForm({ ...editPkgForm, name: e.target.value })} />
                               <input type="text" className="form-control" style={{ padding: '0.3rem' }} value={editPkgForm.hargaJual ? formatRupiah(editPkgForm.hargaJual) : ''} onChange={e => {
                                 const rawValue = e.target.value.replace(/[^0-9]/g, '');
-                                setEditPkgForm({...editPkgForm, hargaJual: rawValue});
+                                setEditPkgForm({ ...editPkgForm, hargaJual: rawValue });
                               }} />
                               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
                                 <button className="btn btn-primary" style={{ padding: '0.3rem', flex: 1 }} onClick={() => saveEditPkg(pkg.id)}><Check size={14} /></button>
-                                <button className="btn" style={{ padding: '0.3rem', flex: 1, background: 'rgba(255,255,255,0.1)' }} onClick={() => setEditPkgId(null)}><X size={14} /></button>
+                                <button className="btn" style={{ padding: '0.3rem', flex: 1, background: 'var(--overlay-border)' }} onClick={() => setEditPkgId(null)}><X size={14} /></button>
                               </div>
                             </>
                           ) : (
                             <>
                               <strong style={{ fontSize: '1rem', color: '#60a5fa' }}>{pkg.name}</strong>
                               <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                                <button className="btn" onClick={() => startEditPkg(pkg)} style={{ padding: '0.3rem', color: '#60a5fa', background: 'rgba(96, 165, 250, 0.1)' }} title="Edit Paket"><Edit2 size={12} /> Edit</button>
-                                <button className="btn" onClick={() => handleDeletePackage(pkg.id)} style={{ padding: '0.3rem', color: '#ef4444', background: 'rgba(239, 68, 68, 0.1)' }} title="Hapus Paket"><Trash2 size={12} /> Hapus</button>
+                                <button className="btn" onClick={() => { setEditPkgId(pkg.id); setEditPkgForm({ name: pkg.name, hargaJual: pkg.hargaJual }); }} style={{ padding: '0.3rem', color: '#60a5fa', background: 'var(--overlay-light)' }}><Edit2 size={12} /> Edit</button>
+                                <button className="btn" onClick={() => handleDeletePackage(pkg.id)} style={{ padding: '0.3rem', color: '#ef4444', background: 'rgba(239, 68, 68, 0.1)' }}><Trash2 size={12} /> Hapus</button>
                               </div>
                             </>
                           )}
                         </div>
                       </td>
 
-                      {pkg.items.length > 0 ? (
-                        <>
-                          {/* Item 0 */}
-                          {(() => {
-                            const item = pkg.items[0];
-                            const bb = bahanBaku.find(b => b.id === item.bahanBakuId);
-                            const cost = bb ? bb.price * item.qty : 0;
-                            const persen = summary.totalHpp > 0 ? cost / summary.totalHpp : 0;
-                            return (
-                              <>
-                                <td>{bb ? bb.name : 'Unknown'}</td>
-                                <td style={{ textAlign: 'center' }}>
-                                  <input type="number" className="form-control" style={{ width: '50px', padding: '0.2rem', textAlign: 'center', margin: '0 auto' }} value={item.qty} onChange={(e) => handleUpdateItemQty(pkg.id, item.id, e.target.value)} />
-                                </td>
-                                <td style={{ textAlign: 'right' }}>{formatRupiah(cost)}</td>
-                                <td style={{ textAlign: 'right', color: 'var(--text-muted)' }}>{formatPercent(persen)}</td>
-                              </>
-                            );
-                          })()}
-                        </>
-                      ) : (
-                        <>
-                          <td colSpan="4" style={{ color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center' }}>Belum ada isi paket</td>
-                        </>
+                      {pkg.items.length > 0 ? (() => {
+                        const item = pkg.items[0];
+                        const cost = item.bb ? Number(item.bb.price) * item.qty : 0;
+                        const persen = summary.totalHpp > 0 ? cost / summary.totalHpp : 0;
+                        return (
+                          <>
+                            <td>{item.bb ? item.bb.name : 'Unknown'}</td>
+                            <td style={{ textAlign: 'center' }}>
+                              <input type="number" className="form-control" style={{ width: '50px', padding: '0.2rem', textAlign: 'center', margin: '0 auto' }} value={item.qty} onChange={(e) => handleUpdateItemQty(item.id, e.target.value)} />
+                            </td>
+                            <td style={{ textAlign: 'right' }}>{formatRupiah(cost)}</td>
+                            <td style={{ textAlign: 'right', color: 'var(--text-muted)' }}>{formatPercent(persen)}</td>
+                          </>
+                        );
+                      })() : (
+                        <td colSpan="4" style={{ color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center' }}>Belum ada isi paket</td>
                       )}
 
                       <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', fontWeight: 'bold' }}>{formatRupiah(summary.totalHpp)}</td>
@@ -216,75 +287,54 @@ const HppProduk = ({ category }) => {
                       <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', color: summary.hppPersen > 0.6 ? '#f87171' : '#34d399' }}>{formatPercent(summary.hppPersen)}</td>
                       <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', fontWeight: 'bold', color: '#60a5fa' }}>{formatRupiah(summary.margin)}</td>
                       <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', color: summary.marginPersen < 0.4 ? '#f87171' : '#34d399' }}>{formatPercent(summary.marginPersen)}</td>
-                      
                       {pkg.items.length > 0 ? (
                         <td style={{ textAlign: 'center' }}>
-                           <button className="btn" onClick={() => handleDeleteItem(pkg.id, pkg.items[0].id)} style={{ padding: '0.3rem', color: '#ef4444', background: 'transparent' }}><X size={14} /></button>
+                          <button className="btn" onClick={() => handleDeleteItem(pkg.items[0].id)} style={{ padding: '0.3rem', color: '#ef4444', background: 'transparent' }}><X size={14} /></button>
                         </td>
-                      ) : (
-                        <td></td>
-                      )}
+                      ) : <td></td>}
                     </tr>
 
-                    {/* Render remaining items */}
                     {pkg.items.slice(1).map(item => {
-                      const bb = bahanBaku.find(b => b.id === item.bahanBakuId);
-                      const cost = bb ? bb.price * item.qty : 0;
+                      const cost = item.bb ? Number(item.bb.price) * item.qty : 0;
                       const persen = summary.totalHpp > 0 ? cost / summary.totalHpp : 0;
                       return (
                         <tr key={item.id}>
-                          <td>{bb ? bb.name : 'Unknown'}</td>
+                          <td>{item.bb ? item.bb.name : 'Unknown'}</td>
                           <td style={{ textAlign: 'center' }}>
-                            <input type="number" className="form-control" style={{ width: '50px', padding: '0.2rem', textAlign: 'center', margin: '0 auto' }} value={item.qty} onChange={(e) => handleUpdateItemQty(pkg.id, item.id, e.target.value)} />
+                            <input type="number" className="form-control" style={{ width: '50px', padding: '0.2rem', textAlign: 'center', margin: '0 auto' }} value={item.qty} onChange={(e) => handleUpdateItemQty(item.id, e.target.value)} />
                           </td>
                           <td style={{ textAlign: 'right' }}>{formatRupiah(cost)}</td>
                           <td style={{ textAlign: 'right', color: 'var(--text-muted)' }}>{formatPercent(persen)}</td>
                           <td style={{ textAlign: 'center' }}>
-                            <button className="btn" onClick={() => handleDeleteItem(pkg.id, item.id)} style={{ padding: '0.3rem', color: '#ef4444', background: 'transparent' }}><X size={14} /></button>
+                            <button className="btn" onClick={() => handleDeleteItem(item.id)} style={{ padding: '0.3rem', color: '#ef4444', background: 'transparent' }}><X size={14} /></button>
                           </td>
                         </tr>
                       );
                     })}
 
-                    {/* Render Add Item Row for this package */}
-                    <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-                      <td style={{ padding: 0 }}>
-                        <select 
-                          className="form-control" 
-                          style={{ border: 'none', background: 'transparent', width: '100%', height: '100%', padding: '0.5rem', outline: 'none' }} 
-                          value="" 
-                          onChange={(e) => handleAddItem(pkg.id, e.target.value)}
-                        >
-                          <option value="" disabled>+ Tambah Bahan Baku...</option>
-                          {bahanBaku.map(bb => (
-                            <option key={bb.id} value={bb.id}>{bb.name} - {formatRupiah(bb.price)}</option>
-                          ))}
-                        </select>
+                    <tr style={{ background: 'var(--overlay-bg)' }}>
+                      <td style={{ padding: 0, minWidth: '300px' }}>
+                        <CustomSelect 
+                          value=""
+                          placeholder="+ Tambah Bahan Baku..."
+                          options={bahanBaku.map(bb => ({ value: bb.id, label: `${bb.name} - ${formatRupiah(bb.price)}` }))}
+                          onChange={(val) => handleAddItem(pkg.id, val)}
+                        />
                       </td>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                      <td></td>
+                      <td></td><td></td><td></td><td></td>
                     </tr>
                   </React.Fragment>
                 );
               })}
-
-              {packages.length === 0 && (
-                <tr>
-                  <td colSpan="11" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-                    Belum ada HPP Produk. Buat paket baru di bawah.
-                  </td>
-                </tr>
+              {!loading && packages.length === 0 && (
+                <tr><td colSpan="11" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Belum ada HPP Produk. Buat paket baru di bawah.</td></tr>
               )}
             </tbody>
           </table>
         </div>
 
-        {/* Add New Package Form */}
         <div style={{ background: 'var(--surface-dark)', padding: '1.5rem', borderRadius: '0.5rem', border: '1px dashed var(--border-glass)' }}>
           <h3 style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '1.25rem', color: '#60a5fa' }}>Buat Paket / Produk Baru</h3>
-          
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '0.85rem' }}>Nama Paket</label>
@@ -292,26 +342,24 @@ const HppProduk = ({ category }) => {
             </div>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '0.85rem' }}>Harga Jual Paket (Rp)</label>
-              <input 
-                type="text" 
-                className="form-control" 
-                placeholder="Rp.0" 
-                value={newPkgHarga ? formatRupiah(newPkgHarga) : ''} 
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Rp.0"
+                value={newPkgHarga ? formatRupiah(newPkgHarga) : ''}
                 onChange={(e) => {
                   const rawValue = e.target.value.replace(/[^0-9]/g, '');
                   setNewPkgHarga(rawValue);
-                }} 
+                }}
               />
             </div>
           </div>
-          
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <button className="btn btn-primary" onClick={handleAddPackage} style={{ padding: '0.6rem 2rem' }}>
               <Plus size={18} /> Tambah Paket
             </button>
           </div>
         </div>
-
       </div>
     </div>
   );

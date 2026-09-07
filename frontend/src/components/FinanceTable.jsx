@@ -6,7 +6,7 @@ const formatRupiah = (number) => {
   return 'Rp.' + Number(number).toLocaleString('id-ID');
 };
 
-const FinanceTable = ({ category, data, onResetAll }) => {
+const FinanceTable = ({ category, data, onResetAll, onDeleteRow }) => {
   const [tempStartDate, setTempStartDate] = useState('');
   const [tempEndDate, setTempEndDate] = useState('');
   const [tempPayment, setTempPayment] = useState('');
@@ -113,7 +113,7 @@ const FinanceTable = ({ category, data, onResetAll }) => {
                 <button className="btn btn-primary" onClick={handleApplyFilter} style={{ padding: '0.5rem 1rem' }}>
                   Terapkan
                 </button>
-                <button className="btn" onClick={handleResetFilter} style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.1)', color: 'var(--text-main)' }}>
+                <button className="btn" onClick={handleResetFilter} style={{ padding: '0.5rem 1rem', background: 'var(--overlay-border)', color: 'var(--text-main)' }}>
                   Reset
                 </button>
               </div>
@@ -146,6 +146,7 @@ const FinanceTable = ({ category, data, onResetAll }) => {
                 <th>Pemasukan</th>
                 <th>Pengeluaran</th>
                 <th>Saldo</th>
+                <th style={{ textAlign: 'center' }}>Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -166,6 +167,15 @@ const FinanceTable = ({ category, data, onResetAll }) => {
                     <td style={{ color: '#34d399' }}>{formatRupiah(row.pemasukan)}</td>
                     <td style={{ color: '#f87171' }}>{formatRupiah(row.pengeluaran)}</td>
                     <td style={{ fontWeight: 'bold' }}>{formatRupiah(row.saldo)}</td>
+                    <td style={{ textAlign: 'center' }}>
+                      <button className="btn" onClick={() => {
+                        if (window.confirm('Yakin ingin menghapus data ini?')) {
+                          if (onDeleteRow) onDeleteRow(row.id);
+                        }
+                      }} style={{ padding: '0.3rem', color: '#ef4444', background: 'transparent' }} title="Hapus Data">
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
                   </tr>
                 );
               })}

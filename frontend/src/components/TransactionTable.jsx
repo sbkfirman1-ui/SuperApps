@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Download, Trash2 } from 'lucide-react';
+import { Download, Trash2, Edit2, Check, X } from 'lucide-react';
 
 const formatRupiah = (number) => {
   if (isNaN(number) || number === null || number === '') return 'Rp.0';
   return 'Rp.' + Number(number).toLocaleString('id-ID');
 };
 
-const TransactionTable = ({ category, data, onResetAll }) => {
+const TransactionTable = ({ category, data, onResetAll, onUpdateRow, onDeleteRow }) => {
   const [tempStartDate, setTempStartDate] = useState('');
   const [tempEndDate, setTempEndDate] = useState('');
   const [tempProduct, setTempProduct] = useState('');
@@ -14,6 +14,9 @@ const TransactionTable = ({ category, data, onResetAll }) => {
   const [activeStartDate, setActiveStartDate] = useState('');
   const [activeEndDate, setActiveEndDate] = useState('');
   const [activeProduct, setActiveProduct] = useState('');
+
+  const [editRowId, setEditRowId] = useState(null);
+  const [editForm, setEditForm] = useState({});
 
   const uniqueProducts = [...new Set(data.map(item => item.produk))];
 
@@ -122,7 +125,7 @@ const TransactionTable = ({ category, data, onResetAll }) => {
                 <button className="btn btn-primary" onClick={handleApplyFilter} style={{ padding: '0.5rem 1rem' }}>
                   Terapkan
                 </button>
-                <button className="btn" onClick={handleResetFilter} style={{ padding: '0.5rem 1rem', background: 'rgba(255,255,255,0.1)', color: 'var(--text-main)' }}>
+                <button className="btn" onClick={handleResetFilter} style={{ padding: '0.5rem 1rem', background: 'var(--overlay-border)', color: 'var(--text-main)' }}>
                   Reset
                 </button>
               </div>
@@ -161,6 +164,7 @@ const TransactionTable = ({ category, data, onResetAll }) => {
                 <th>Catatan</th>
                 <th>Status</th>
                 <th>Check 1</th>
+                <th style={{ textAlign: 'center' }}>Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -177,18 +181,80 @@ const TransactionTable = ({ category, data, onResetAll }) => {
                     <td>{row.vendor}</td>
                     <td><span className="badge badge-product">{row.produk}</span></td>
                     <td>{row.kategori}</td>
-                    <td>{formatRupiah(row.dp)}</td>
-                    <td>{formatRupiah(row.harga)}</td>
-                    <td>{formatRupiah(selisih)}</td>
-                    <td>{row.catatan}</td>
-                    <td>
-                      <span className={`status-badge ${statusColor}`}>
-                        {row.status}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <input type="checkbox" defaultChecked={row.check1} className="custom-checkbox" />
-                    </td>
+                    
+                    {editRowId === row.id ? (
+                      <>
+                        <td>
+                          <input type="text" className="form-control" style={{ width: '110px', padding: '0.3rem' }} 
+                            value={editForm.dp ? formatRupiah(editForm.dp) : ''} 
+                            onChange={e => setEditForm({...editForm, dp: e.target.value.replace(/[^0-9]/g, '')})} 
+                          />
+                        </td>
+                        <td>
+                          <input type="text" className="form-control" style={{ width: '110px', padding: '0.3rem' }} 
+                            value={editForm.harga ? formatRupiah(editForm.harga) : ''} 
+                            onChange={e => setEditForm({...editForm, harga: e.target.value.replace(/[^0-9]/g, '')})} 
+                          />
+                        </td>
+                        <td>{formatRupiah(Math.max(0, Number(editForm.harga || 0) - Number(editForm.dp || 0)))}</td>
+                        <td>
+                          <input type="text" className="form-control" style={{ width: '150px', padding: '0.3rem' }} 
+                            value={editForm.catatan} onChange={e => setEditForm({...editForm, catatan: e.target.value})} 
+                          />
+                        </td>
+                        <td>
+                          <span className={`status-badge ${Number(editForm.dp || 0) >= Number(editForm.harga || 0) ? 'bg-success' : (Number(editForm.dp || 0) === 0 ? 'bg-danger' : 'bg-warning')}`}>
+                            {Number(editForm.dp || 0) >= Number(editForm.harga || 0) ? 'LUNAS' : (Number(editForm.dp || 0) === 0 ? 'BELUM LUNAS' : 'DP')}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <input type="checkbox" defaultChecked={row.check1} className="custom-checkbox" disabled />
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                            <button className="btn" onClick={() => {
+                              if (onUpdateRow) {
+                                onUpdateRow(row.id, { dp: Number(editForm.dp), productPrice: Number(editForm.harga), catatan: editForm.catatan });
+                                setEditRowId(null);
+                              }
+                            }} style={{ padding: '0.3rem', color: '#34d399', background: 'transparent' }}><Check size={16} /></button>
+                            <button className="btn" onClick={() => setEditRowId(null)} style={{ padding: '0.3rem', color: 'var(--text-muted)', background: 'transparent' }}><X size={16} /></button>
+                          </div>
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td>{formatRupiah(row.dp)}</td>
+                        <td>{formatRupiah(row.harga)}</td>
+                        <td>{formatRupiah(selisih)}</td>
+                        <td>{row.catatan}</td>
+                        <td>
+                          <span className={`status-badge ${statusColor}`}>
+                            {row.status}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <input type="checkbox" defaultChecked={row.check1} className="custom-checkbox" />
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                            <button className="btn" onClick={() => {
+                              setEditRowId(row.id);
+                              setEditForm({ dp: row.dp, harga: row.harga, catatan: row.catatan || '' });
+                            }} style={{ padding: '0.3rem', color: '#60a5fa', background: 'transparent' }} title="Edit Data">
+                              <Edit2 size={16} />
+                            </button>
+                            <button className="btn" onClick={() => {
+                              if (window.confirm('Yakin ingin menghapus transaksi ini?')) {
+                                if (onDeleteRow) onDeleteRow(row.id);
+                              }
+                            }} style={{ padding: '0.3rem', color: '#ef4444', background: 'transparent' }} title="Hapus Data">
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </>
+                    )}
                   </tr>
                 );
               })}

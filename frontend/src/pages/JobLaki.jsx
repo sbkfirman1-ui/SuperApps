@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ChevronDown, Calendar as CalendarIcon, Clock, User, Phone, MapPin } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 const CustomSelect = ({ value, options, onChange }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,7 +32,7 @@ const CustomSelect = ({ value, options, onChange }) => {
             background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)',
             borderRadius: '0.5rem', padding: '0.5rem', zIndex: 50,
             maxHeight: '300px', overflowY: 'auto', minWidth: '100%',
-            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)'
+            boxShadow: '0 10px 25px -5px var(--overlay-darker)'
           }}>
             {options.map(o => (
               <div 
@@ -45,7 +46,7 @@ const CustomSelect = ({ value, options, onChange }) => {
                   marginBottom: '0.1rem',
                   fontSize: '0.95rem'
                 }}
-                onMouseEnter={e => { if (o.value !== value) e.target.style.background = 'rgba(255,255,255,0.05)' }}
+                onMouseEnter={e => { if (o.value !== value) e.target.style.background = 'var(--overlay-bg-hover)' }}
                 onMouseLeave={e => { if (o.value !== value) e.target.style.background = 'transparent' }}
               >
                 {o.label}
@@ -64,24 +65,17 @@ const JobLaki = () => {
   const [selectedDate, setSelectedDate] = useState(null);
 
   useEffect(() => {
-    try {
-      const savedWedding = localStorage.getItem('transaksi_wedding');
-      const savedStudio = localStorage.getItem('transaksi_studio');
-      
-      let allJobs = [];
-      if (savedWedding) {
-        allJobs = [...allJobs, ...JSON.parse(savedWedding).map(j => ({ ...j, category: 'Wedding' }))];
+    const fetchJobs = async () => {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .not('dDayDate', 'is', null);
+
+      if (!error && data) {
+        setJobs(data.filter(j => j.dDayDate));
       }
-      if (savedStudio) {
-        allJobs = [...allJobs, ...JSON.parse(savedStudio).map(j => ({ ...j, category: 'Studio' }))];
-      }
-      
-      // Only keep jobs with a valid D-Day date
-      allJobs = allJobs.filter(j => j.dDayDate);
-      setJobs(allJobs);
-    } catch (e) {
-      console.error('Failed to load jobs', e);
-    }
+    };
+    fetchJobs();
   }, []);
 
   const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
@@ -119,7 +113,7 @@ const JobLaki = () => {
     const cells = [];
     // Blank cells before 1st day
     for (let i = 0; i < firstDay; i++) {
-      cells.push(<div key={`blank-${i}`} className="calendar-cell empty" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-glass)', minHeight: '100px' }}></div>);
+      cells.push(<div key={`blank-${i}`} className="calendar-cell empty" style={{ background: 'var(--overlay-bg)', border: '1px solid var(--border-glass)', minHeight: '100px' }}></div>);
     }
 
     // Days in month
@@ -134,7 +128,7 @@ const JobLaki = () => {
           key={d} 
           onClick={() => setSelectedDate(dateStr)}
           style={{ 
-            background: isSelected ? 'rgba(96, 165, 250, 0.1)' : 'var(--surface-dark)', 
+            background: isSelected ? 'var(--overlay-light)' : 'var(--surface-dark)', 
             border: `1px solid ${isSelected ? '#60a5fa' : 'var(--border-glass)'}`, 
             minHeight: '120px', 
             padding: '0.5rem',
@@ -145,7 +139,7 @@ const JobLaki = () => {
             gap: '0.25rem'
           }}
           onMouseEnter={(e) => {
-            if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+            if (!isSelected) e.currentTarget.style.background = 'var(--overlay-bg-hover)';
           }}
           onMouseLeave={(e) => {
             if (!isSelected) e.currentTarget.style.background = 'var(--surface-dark)';
@@ -167,7 +161,7 @@ const JobLaki = () => {
               {d}
             </span>
             {dayJobs.length > 0 && (
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', background: 'rgba(255,255,255,0.1)', padding: '0.1rem 0.4rem', borderRadius: '1rem' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', background: 'var(--overlay-border)', padding: '0.1rem 0.4rem', borderRadius: '1rem' }}>
                 {dayJobs.length} Job
               </span>
             )}
@@ -179,7 +173,7 @@ const JobLaki = () => {
                 fontSize: '0.75rem', 
                 padding: '0.2rem 0.4rem', 
                 borderRadius: '0.25rem', 
-                background: job.category === 'Wedding' ? 'rgba(236, 72, 153, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                background: job.category === 'Wedding' ? 'var(--accent-wedding-bg)' : 'var(--success-bg)',
                 color: job.category === 'Wedding' ? '#f472b6' : '#34d399',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
@@ -263,7 +257,7 @@ const JobLaki = () => {
             </div>
           ) : selectedJobs.length === 0 ? (
             <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem 0' }}>
-              <div style={{ display: 'inline-flex', background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '50%', marginBottom: '1rem' }}>
+              <div style={{ display: 'inline-flex', background: 'var(--overlay-bg-hover)', padding: '1rem', borderRadius: '50%', marginBottom: '1rem' }}>
                 <Clock size={32} />
               </div>
               <p>Tidak ada jadwal job di hari ini.</p>
@@ -274,12 +268,12 @@ const JobLaki = () => {
               {/* WEDDING SECTION */}
               {selectedJobs.filter(j => j.category === 'Wedding').length > 0 && (
                 <div>
-                  <h3 style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#f472b6', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid rgba(236,72,153,0.3)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
+                  <h3 style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#f472b6', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--accent-wedding-border)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
                     Wedding ({selectedJobs.filter(j => j.category === 'Wedding').length})
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     {selectedJobs.filter(j => j.category === 'Wedding').map(job => (
-                      <div key={job.id} style={{ background: 'rgba(0,0,0,0.2)', borderLeft: '3px solid #ec4899', borderRadius: '0.3rem', padding: '1rem' }}>
+                      <div key={job.id} style={{ background: 'var(--input-bg)', borderLeft: '3px solid #ec4899', borderRadius: '0.3rem', padding: '1rem' }}>
                         <h3 style={{ fontSize: '1.05rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>{job.clientName || 'Tanpa Nama'}</h3>
                         <div style={{ color: '#60a5fa', fontSize: '0.85rem', marginBottom: '0.75rem', fontWeight: '500' }}>{job.productName}</div>
                         
@@ -297,12 +291,12 @@ const JobLaki = () => {
               {/* STUDIO SECTION */}
               {selectedJobs.filter(j => j.category === 'Studio').length > 0 && (
                 <div>
-                  <h3 style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#34d399', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid rgba(16,185,129,0.3)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
+                  <h3 style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#34d399', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--success-border)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
                     Studio ({selectedJobs.filter(j => j.category === 'Studio').length})
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     {selectedJobs.filter(j => j.category === 'Studio').map(job => (
-                      <div key={job.id} style={{ background: 'rgba(0,0,0,0.2)', borderLeft: '3px solid #10b981', borderRadius: '0.3rem', padding: '1rem' }}>
+                      <div key={job.id} style={{ background: 'var(--input-bg)', borderLeft: '3px solid #10b981', borderRadius: '0.3rem', padding: '1rem' }}>
                         <h3 style={{ fontSize: '1.05rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>{job.clientName || 'Tanpa Nama'}</h3>
                         <div style={{ color: '#60a5fa', fontSize: '0.85rem', marginBottom: '0.75rem', fontWeight: '500' }}>{job.productName}</div>
                         
