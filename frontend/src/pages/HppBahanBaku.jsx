@@ -15,8 +15,8 @@ const HppBahanBaku = ({ category }) => {
   const [editId, setEditId] = useState(null);
   const [editForm, setEditForm] = useState({ name: '', satuan: '', unit: 1, price: '' });
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const fetchData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     const { data, error } = await supabase
       .from('hpp_bahan_baku')
       .select('*')
@@ -46,14 +46,14 @@ const HppBahanBaku = ({ category }) => {
     }]);
     if (!error) {
       setNewItem({ name: '', satuan: 'pcs', unit: 1, price: '' });
-      fetchData();
+      fetchData(true);
     }
   };
 
   const handleDelete = async (id) => {
     if (window.confirm('Hapus bahan baku ini?')) {
       await supabase.from('hpp_bahan_baku').delete().eq('id', id);
-      fetchData();
+      fetchData(true);
     }
   };
 
@@ -69,7 +69,7 @@ const HppBahanBaku = ({ category }) => {
       price: Number(editForm.price),
     }).eq('id', id);
     setEditId(null);
-    fetchData();
+    fetchData(true);
   };
 
   const totalCost = bahanBaku.reduce((acc, curr) => acc + Number(curr.price), 0);

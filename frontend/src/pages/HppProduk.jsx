@@ -120,8 +120,8 @@ const HppProduk = ({ category }) => {
   const [editPkgId, setEditPkgId] = useState(null);
   const [editPkgForm, setEditPkgForm] = useState({ name: '', hargaJual: '' });
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const fetchData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     const [{ data: pkgData }, { data: bbData }] = await Promise.all([
       supabase.from('hpp_packages').select('*, hpp_package_items(*, hpp_bahan_baku(*))').eq('category', category).order('created_at', { ascending: true }),
       supabase.from('hpp_bahan_baku').select('*').eq('category', category).order('created_at', { ascending: true }),
@@ -164,13 +164,13 @@ const HppProduk = ({ category }) => {
     }]);
     setNewPkgName('');
     setNewPkgHarga('');
-    fetchData();
+    fetchData(true);
   };
 
   const handleDeletePackage = async (id) => {
     if (window.confirm('Hapus paket ini beserta isinya?')) {
       await supabase.from('hpp_packages').delete().eq('id', id);
-      fetchData();
+      fetchData(true);
     }
   };
 
@@ -180,7 +180,7 @@ const HppProduk = ({ category }) => {
       hargaJual: Number(editPkgForm.hargaJual)
     }).eq('id', id);
     setEditPkgId(null);
-    fetchData();
+    fetchData(true);
   };
 
   const handleAddItem = async (pkgId, bahanBakuId) => {
@@ -190,17 +190,17 @@ const HppProduk = ({ category }) => {
       bahan_baku_id: bahanBakuId,
       qty: 1,
     }]);
-    fetchData();
+    fetchData(true);
   };
 
   const handleUpdateItemQty = async (itemId, newQty) => {
     await supabase.from('hpp_package_items').update({ qty: Number(newQty) }).eq('id', itemId);
-    fetchData();
+    fetchData(true);
   };
 
   const handleDeleteItem = async (itemId) => {
     await supabase.from('hpp_package_items').delete().eq('id', itemId);
-    fetchData();
+    fetchData(true);
   };
 
   return (
