@@ -27,20 +27,25 @@ const Sidebar = () => {
 
         <div className="nav-group">
           <div className="nav-link-wrapper">
-            <NavLink to="/input" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} style={{ flex: 1 }}>
+            <div className="nav-link" style={{ flex: 1, cursor: 'pointer', paddingRight: 0 }} onClick={() => setIsInputOpen(!isInputOpen)}>
               <FilePlus size={20} /> Input Transaksi
-            </NavLink>
+            </div>
             <button className="toggle-btn" onClick={(e) => { e.preventDefault(); setIsInputOpen(!isInputOpen); }}>
               {isInputOpen ? <Minus size={16} /> : <Plus size={16} />}
             </button>
           </div>
           
           <div className={`sub-menu-container ${isInputOpen ? 'open' : ''}`}>
-            <div className="sub-menu-inner">
-              <NavLink to="/data/wedding" className={({ isActive }) => `nav-link nav-link-sub ${isActive ? 'active' : ''}`}>
+            <div className="sub-menu-inner" style={{ gap: '0.5rem' }}>
+              <NavLink to="/input" className={({ isActive }) => `nav-link nav-link-sub ${isActive ? 'active' : ''}`}>
+                Form Transaksi
+              </NavLink>
+
+              <div style={{ padding: '0.5rem 1rem 0.2rem', fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Riwayat</div>
+              <NavLink to="/data/wedding" className={({ isActive }) => `nav-link nav-link-sub ${isActive ? 'active' : ''}`} style={{ paddingLeft: '2rem' }}>
                 Wedding
               </NavLink>
-              <NavLink to="/data/studio" className={({ isActive }) => `nav-link nav-link-sub ${isActive ? 'active' : ''}`}>
+              <NavLink to="/data/studio" className={({ isActive }) => `nav-link nav-link-sub ${isActive ? 'active' : ''}`} style={{ paddingLeft: '2rem' }}>
                 Studio
               </NavLink>
             </div>
