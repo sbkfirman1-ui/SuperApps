@@ -69,12 +69,32 @@ async function run() {
   console.log("Menghapus data bahan baku yang lama agar tidak duplikat...");
   await supabase.from('hpp_bahan_baku').delete().neq('id', '00000000-0000-0000-0000-000000000000'); // delete all
 
-  const dataToInsert = RAW.map(item => ({
-    name: item.name,
-    unit: item.unit,
-    price: item.price,
-    category: item.name.includes('(Studio)') ? 'Studio' : 'Wedding'
-  }));
+  const dataToInsert = [];
+  RAW.forEach(item => {
+    const isStudioOnly = item.name.toLowerCase().includes('studio');
+    
+    if (isStudioOnly) {
+      dataToInsert.push({
+        name: item.name,
+        unit: item.unit,
+        price: item.price,
+        category: 'Studio'
+      });
+    } else {
+      dataToInsert.push({
+        name: item.name,
+        unit: item.unit,
+        price: item.price,
+        category: 'Studio'
+      });
+      dataToInsert.push({
+        name: item.name,
+        unit: item.unit,
+        price: item.price,
+        category: 'Wedding'
+      });
+    }
+  });
 
   console.log("Memasukkan 52 data baru ke database Supabase...");
   const { data, error } = await supabase.from('hpp_bahan_baku').insert(dataToInsert);
