@@ -1,7 +1,105 @@
-import React, { useState, useEffect } from 'react';
-import { Save } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { Save, ChevronDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { getMasterData } from '../utils/masterData';
+
+const CustomSelect = ({ value, placeholder, options, onChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const triggerRef = useRef(null);
+  const [menuCoords, setMenuCoords] = useState({ top: 0, left: 0, width: 0 });
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const selectedLabel = options.find(o => o.value === value)?.label || placeholder;
+
+  const handleToggle = () => {
+    if (!isOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setMenuCoords({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width
+      });
+      setSearchQuery(''); // Reset search on open
+    }
+    setIsOpen(!isOpen);
+  };
+
+  const filteredOptions = options.filter(o => 
+    o.label.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div style={{ width: '100%', height: '100%' }}>
+      <div 
+        ref={triggerRef}
+        onClick={handleToggle}
+        style={{ 
+          display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'space-between',
+          padding: '0.75rem 1rem', background: 'transparent',
+          cursor: 'pointer', fontSize: '0.9rem', color: value ? 'var(--text-main)' : 'var(--text-muted)'
+        }}
+      >
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedLabel}</span>
+        <ChevronDown size={14} style={{ flexShrink: 0 }} />
+      </div>
+
+      {isOpen && createPortal(
+        <div style={{ position: 'relative', zIndex: 9999 }}>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setIsOpen(false)} />
+          <div style={{ 
+            position: 'fixed', top: menuCoords.top, left: menuCoords.left, width: menuCoords.width,
+            background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)',
+            borderRadius: '0.5rem', padding: '0.5rem', zIndex: 50,
+            maxHeight: '300px', display: 'flex', flexDirection: 'column',
+            boxShadow: '0 10px 25px -5px var(--overlay-darker)'
+          }}>
+            <div style={{ padding: '0.25rem 0.5rem', borderBottom: '1px solid var(--border-glass)', marginBottom: '0.5rem' }}>
+              <input
+                type="text"
+                autoFocus
+                placeholder="Cari paket produk..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: '100%', padding: '0.5rem', background: 'var(--input-bg)',
+                  border: '1px solid var(--border-glass)', borderRadius: '0.25rem',
+                  color: 'var(--text-main)', fontSize: '0.85rem', outline: 'none'
+                }}
+              />
+            </div>
+            <div style={{ overflowY: 'auto', flex: 1 }}>
+              {filteredOptions.length > 0 ? filteredOptions.map(o => (
+                <div 
+                  key={o.value}
+                  onClick={() => { onChange(o.value); setIsOpen(false); }}
+                  style={{
+                    padding: '0.6rem 1rem', cursor: 'pointer', borderRadius: '0.3rem',
+                    background: o.value === value ? 'var(--primary)' : 'transparent',
+                    color: o.value === value ? '#fff' : 'var(--text-main)',
+                    transition: 'background 0.2s',
+                    marginBottom: '0.1rem',
+                    fontSize: '0.9rem',
+                    whiteSpace: 'nowrap'
+                  }}
+                  onMouseEnter={e => { if (o.value !== value) e.target.style.background = 'var(--overlay-bg-hover)' }}
+                  onMouseLeave={e => { if (o.value !== value) e.target.style.background = 'transparent' }}
+                >
+                  {o.label}
+                </div>
+              )) : (
+                <div style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                  Tidak ditemukan
+                </div>
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+};
 
 const formatRupiah = (number) => {
   if (isNaN(number) || number === null || number === '') return 'Rp.0';
@@ -55,8 +153,7 @@ const InputTransaksi = () => {
     });
   };
 
-  const handleProductChange = (e) => {
-    const selectedId = e.target.value;
+  const handleProductChange = (selectedId) => {
     const activeProducts = formData.category === 'Wedding' ? weddingProducts : studioProducts;
     const product = activeProducts.find(p => String(p.id) === String(selectedId));
 
@@ -169,14 +266,19 @@ const InputTransaksi = () => {
           </div>
 
           <div className="form-row">
-            <div className="form-group">
+            <div className="form-group" style={{ position: 'relative' }}>
               <label className="form-label">Pilihan Produk</label>
-              <select className="form-control" name="productId" value={formData.productId} onChange={handleProductChange} required>
-                <option value="" disabled>-- Pilih Paket {formData.category} --</option>
-                {activeProducts.map(prod => (
-                  <option key={prod.id} value={prod.id}>{prod.name}</option>
-                ))}
-              </select>
+              <div className="form-control" style={{ padding: 0 }}>
+                <CustomSelect 
+                  value={formData.productId}
+                  placeholder={`-- Pilih Paket ${formData.category} --`}
+                  options={activeProducts.map(p => ({ value: p.id, label: p.name }))}
+                  onChange={handleProductChange}
+                />
+              </div>
+              {!formData.productId && (
+                <input type="text" required style={{ opacity: 0, position: 'absolute', pointerEvents: 'none', top: '50%' }} value="" onChange={() => {}} />
+              )}
             </div>
             <div className="form-group">
               <label className="form-label">Harga Produk</label>
