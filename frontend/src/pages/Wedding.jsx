@@ -29,7 +29,7 @@ const Wedding = () => {
         kategori: tx.category,
         dp: Number(tx.dp),
         harga: Number(tx.productPrice),
-        catatan: allNotes[tx.id] || '',
+        catatan: tx.catatan || allNotes[tx.id] || '',
         status: Number(tx.dp) === 0 ? 'BELUM LUNAS' : (Number(tx.dp) >= Number(tx.productPrice) ? 'LUNAS' : 'DP'),
       }));
       setData(mapped);
@@ -40,13 +40,14 @@ const Wedding = () => {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleUpdateRow = async (id, updates) => {
-    // Save DP and Harga to Supabase
+    // Save DP, Harga, and Catatan to Supabase
     await supabase.from('transactions').update({
       dp: updates.dp,
-      productPrice: updates.productPrice
+      productPrice: updates.productPrice,
+      catatan: updates.catatan
     }).eq('id', id);
 
-    // Save Catatan to LocalStorage
+    // Also update local storage for backward compatibility
     const allNotes = getMasterData('transaction_notes', {});
     allNotes[id] = updates.catatan;
     setMasterData('transaction_notes', allNotes);

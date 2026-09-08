@@ -41,7 +41,8 @@ const InputTransaksi = () => {
     productId: '',
     productName: '',
     productPrice: 0,
-    dp: ''
+    dp: '',
+    catatan: ''
   });
 
   const handleCategoryChange = (e) => {
@@ -88,6 +89,7 @@ const InputTransaksi = () => {
       dp: dpVal,
       bookingDate: formData.bookingDate || null,
       dDayDate: formData.dDayDate || null,
+      catatan: formData.catatan || null
     }]);
 
     setLoading(false);
@@ -105,7 +107,8 @@ const InputTransaksi = () => {
         productId: '',
         productName: '',
         productPrice: 0,
-        dp: ''
+        dp: '',
+        catatan: ''
       });
     }
   };
@@ -200,6 +203,18 @@ const InputTransaksi = () => {
               <label className="form-label">Sisa Tagihan / Selisih</label>
               <input type="text" className="form-control" value={formatRupiah(Math.max(0, (formData.productPrice || 0) - (Number(formData.dp) || 0)))} readOnly disabled />
             </div>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Catatan</label>
+            <textarea 
+              className="form-control" 
+              name="catatan" 
+              placeholder="Tambahkan catatan khusus terkait pesanan ini (Opsional)" 
+              value={formData.catatan} 
+              onChange={handleChange} 
+              rows="3"
+            />
           </div>
 
           <div style={{ marginTop: '2.5rem', display: 'flex', justifyContent: 'flex-end' }}>
