@@ -203,15 +203,54 @@ const HppProduk = ({ category }) => {
     fetchData(true);
   };
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState('startsWith');
+
+  const filteredPackages = packages.filter(pkg => {
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    const pkgName = pkg.name.toLowerCase();
+    if (filterType === 'startsWith') {
+      return pkgName.startsWith(term);
+    }
+    return pkgName.includes(term);
+  });
+
   return (
     <div className="animate-fade-in" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', paddingBottom: '4rem' }}>
-      <div className="page-header">
-        <h1 className="page-title">HPP Produk - {category}</h1>
-        <p className="page-subtitle">Desain HPP dan penentuan Harga Jual Paket {category}</p>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h1 className="page-title">HPP Produk - {category}</h1>
+          <p className="page-subtitle">Desain HPP dan penentuan Harga Jual Paket {category}</p>
+        </div>
+        
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', background: 'var(--surface-dark)', padding: '0.5rem 1rem', borderRadius: '0.5rem', border: '1px solid var(--border-glass)' }}>
+          <select 
+            className="form-control" 
+            style={{ width: 'auto', border: 'none', background: 'transparent', padding: '0.2rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+          >
+            <option value="startsWith">Berawal dari kata...</option>
+            <option value="contains">Mengandung kata...</option>
+          </select>
+          <div style={{ width: '1px', height: '20px', background: 'var(--border-glass)' }}></div>
+          <input 
+            type="text" 
+            className="form-control" 
+            placeholder="Cari nama paket/produk..." 
+            style={{ border: 'none', background: 'transparent', width: '250px', outline: 'none' }}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
       </div>
 
       <div className="glass-panel" style={{ padding: '2rem' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem', color: 'var(--text-main)' }}>Kalkulasi HPP Produk</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text-main)', margin: 0 }}>Kalkulasi HPP Produk</h2>
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Menampilkan {filteredPackages.length} Paket</span>
+        </div>
 
         <div className="table-container" style={{ marginBottom: '2rem', overflowX: 'auto' }}>
           <table className="data-table" style={{ minWidth: '1000px', fontSize: '0.9rem' }}>
@@ -233,7 +272,7 @@ const HppProduk = ({ category }) => {
             <tbody>
               {loading ? (
                 <tr><td colSpan="11" style={{ padding: 0 }}><Loader text="Memuat data dari database..." /></td></tr>
-              ) : packages.map((pkg) => {
+              ) : filteredPackages.map((pkg) => {
                 const summary = calculateSummary(pkg);
                 const rowCount = Math.max(pkg.items.length, 1);
                 return (
@@ -329,6 +368,9 @@ const HppProduk = ({ category }) => {
               })}
               {!loading && packages.length === 0 && (
                 <tr><td colSpan="11" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Belum ada HPP Produk. Buat paket baru di bawah.</td></tr>
+              )}
+              {!loading && packages.length > 0 && filteredPackages.length === 0 && (
+                <tr><td colSpan="11" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>Tidak ada paket yang sesuai dengan pencarian Anda.</td></tr>
               )}
             </tbody>
           </table>
