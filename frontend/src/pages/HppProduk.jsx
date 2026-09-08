@@ -205,15 +205,25 @@ const HppProduk = ({ category }) => {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('startsWith');
+  const [variantFilter, setVariantFilter] = useState('all');
 
   const filteredPackages = packages.filter(pkg => {
+    // Filter by Variant first
+    const pkgNameLower = pkg.name.toLowerCase();
+    if (variantFilter === 'no_video' && !pkgNameLower.includes('-vidio') && !pkgNameLower.includes('- vidio')) {
+      return false;
+    }
+    if (variantFilter === 'with_video' && !pkgNameLower.includes('+vidio') && !pkgNameLower.includes('+ vidio')) {
+      return false;
+    }
+
+    // Filter by Search Term
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
-    const pkgName = pkg.name.toLowerCase();
     if (filterType === 'startsWith') {
-      return pkgName.startsWith(term);
+      return pkgNameLower.startsWith(term);
     }
-    return pkgName.includes(term);
+    return pkgNameLower.includes(term);
   });
 
   return (
@@ -225,6 +235,17 @@ const HppProduk = ({ category }) => {
         </div>
         
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', background: 'var(--surface-dark)', padding: '0.5rem 1rem', borderRadius: '0.5rem', border: '1px solid var(--border-glass)' }}>
+          <select 
+            className="form-control" 
+            style={{ width: 'auto', border: 'none', background: 'transparent', padding: '0.2rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}
+            value={variantFilter}
+            onChange={(e) => setVariantFilter(e.target.value)}
+          >
+            <option value="all">Semua Varian</option>
+            <option value="no_video">Tanpa Vidio (-Vidio)</option>
+            <option value="with_video">Dengan Vidio (+Vidio)</option>
+          </select>
+          <div style={{ width: '1px', height: '20px', background: 'var(--border-glass)' }}></div>
           <select 
             className="form-control" 
             style={{ width: 'auto', border: 'none', background: 'transparent', padding: '0.2rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}
