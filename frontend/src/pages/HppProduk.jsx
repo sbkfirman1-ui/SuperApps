@@ -25,10 +25,24 @@ const CustomSelect = ({ value, placeholder, options, onChange }) => {
   const handleToggle = () => {
     if (!isOpen && triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      
+      let topPos = rect.bottom + 4;
+      let maxH = 300;
+      
+      if (spaceBelow < 250 && spaceAbove > spaceBelow) {
+        maxH = Math.min(300, spaceAbove - 10);
+        topPos = rect.top - 4 - maxH;
+      } else {
+        maxH = Math.min(300, spaceBelow - 10);
+      }
+
       setMenuCoords({
-        top: rect.bottom + 4,
+        top: topPos,
         left: rect.left,
-        width: rect.width
+        width: rect.width,
+        maxHeight: maxH
       });
       setSearchQuery(''); // Reset search on open
     }
@@ -61,7 +75,7 @@ const CustomSelect = ({ value, placeholder, options, onChange }) => {
             position: 'fixed', top: menuCoords.top, left: menuCoords.left, width: menuCoords.width,
             background: 'var(--bg-secondary)', border: '1px solid var(--border-glass)',
             borderRadius: '0.5rem', padding: '0.5rem', zIndex: 50,
-            maxHeight: '300px', display: 'flex', flexDirection: 'column',
+            maxHeight: `${menuCoords.maxHeight}px`, display: 'flex', flexDirection: 'column',
             boxShadow: '0 10px 25px -5px var(--overlay-darker)'
           }}>
             <div style={{ padding: '0.25rem 0.5rem', borderBottom: '1px solid var(--border-glass)', marginBottom: '0.5rem' }}>
