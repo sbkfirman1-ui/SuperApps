@@ -111,6 +111,36 @@ const CustomSelect = ({ value, placeholder, options, onChange }) => {
   );
 };
 
+const QtyInput = ({ initialQty, onSave }) => {
+  const [qty, setQty] = useState(initialQty);
+  
+  useEffect(() => { setQty(initialQty); }, [initialQty]);
+
+  const handleBlur = () => {
+    if (Number(qty) !== Number(initialQty)) {
+      onSave(qty);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.target.blur();
+    }
+  };
+
+  return (
+    <input 
+      type="number" 
+      className="form-control" 
+      style={{ width: '50px', padding: '0.2rem', textAlign: 'center', margin: '0 auto' }} 
+      value={qty} 
+      onChange={(e) => setQty(e.target.value)}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+    />
+  );
+};
+
 const HppProduk = ({ category }) => {
   const [packages, setPackages] = useState([]);
   const [bahanBaku, setBahanBaku] = useState([]);
@@ -175,12 +205,17 @@ const HppProduk = ({ category }) => {
   };
 
   const saveEditPkg = async (id) => {
-    await supabase.from('hpp_packages').update({
-      name: editPkgForm.name,
-      hargaJual: Number(editPkgForm.hargaJual)
-    }).eq('id', id);
-    setEditPkgId(null);
-    fetchData(true);
+    try {
+      const { error } = await supabase.from('hpp_packages').update({
+        name: editPkgForm.name,
+        hargaJual: Number(editPkgForm.hargaJual)
+      }).eq('id', id);
+      if (error) throw error;
+      setEditPkgId(null);
+      fetchData(true);
+    } catch (err) {
+      alert("Gagal menyimpan: " + err.message);
+    }
   };
 
   const handleAddItem = async (pkgId, bahanBakuId) => {
@@ -333,7 +368,7 @@ const HppProduk = ({ category }) => {
                           <>
                             <td>{item.bb ? item.bb.name : 'Unknown'}</td>
                             <td style={{ textAlign: 'center' }}>
-                              <input type="number" className="form-control" style={{ width: '50px', padding: '0.2rem', textAlign: 'center', margin: '0 auto' }} value={item.qty} onChange={(e) => handleUpdateItemQty(item.id, e.target.value)} />
+                              <QtyInput initialQty={item.qty} onSave={(val) => handleUpdateItemQty(item.id, val)} />
                             </td>
                             <td style={{ textAlign: 'right' }}>{formatRupiah(cost)}</td>
                             <td style={{ textAlign: 'right', color: 'var(--text-muted)' }}>{formatPercent(persen)}</td>
@@ -362,7 +397,7 @@ const HppProduk = ({ category }) => {
                         <tr key={item.id}>
                           <td>{item.bb ? item.bb.name : 'Unknown'}</td>
                           <td style={{ textAlign: 'center' }}>
-                            <input type="number" className="form-control" style={{ width: '50px', padding: '0.2rem', textAlign: 'center', margin: '0 auto' }} value={item.qty} onChange={(e) => handleUpdateItemQty(item.id, e.target.value)} />
+                            <QtyInput initialQty={item.qty} onSave={(val) => handleUpdateItemQty(item.id, val)} />
                           </td>
                           <td style={{ textAlign: 'right' }}>{formatRupiah(cost)}</td>
                           <td style={{ textAlign: 'right', color: 'var(--text-muted)' }}>{formatPercent(persen)}</td>
