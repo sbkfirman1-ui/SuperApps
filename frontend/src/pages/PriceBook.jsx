@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Loader from '../components/Loader';
 import { supabase } from '../lib/supabase';
+import { Plus, ChevronDown } from 'lucide-react';
 
 const formatRupiah = (number) => {
   if (isNaN(number) || number === null || number === '') return 'Rp.0';
@@ -79,6 +80,26 @@ const PriceBook = ({ category }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('startsWith');
   const [variantFilter, setVariantFilter] = useState('all');
+  const [expandedGroups, setExpandedGroups] = useState({});
+
+  const toggleGroup = (group) => {
+    setExpandedGroups(prev => ({ ...prev, [group]: !prev[group] }));
+  };
+
+  const getGroupName = (name) => {
+    if (!name) return 'Lainnya';
+    const lowerName = name.toLowerCase();
+    if (lowerName.startsWith('intimate wedding')) return 'Intimate Wedding';
+    if (lowerName.startsWith('prewedding') || lowerName.startsWith('prewed')) return 'Prewedding';
+    if (lowerName.startsWith('wedding')) return 'Wedding';
+    if (lowerName.startsWith('engagement') || lowerName.startsWith('lamaran')) return 'Engagement / Lamaran';
+    if (lowerName.startsWith('siraman')) return 'Siraman';
+    if (lowerName.startsWith('akad')) return 'Akad';
+    if (lowerName.startsWith('resepsi')) return 'Resepsi';
+    
+    const firstWord = name.trim().split(' ')[0];
+    return firstWord ? firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase() : 'Lainnya';
+  };
 
   if (loading) {
     return (
@@ -107,6 +128,15 @@ const PriceBook = ({ category }) => {
     }
     return pkgNameLower.includes(term);
   });
+
+  const groupedPackages = filteredPackages.reduce((acc, pkg) => {
+    const group = getGroupName(pkg.name);
+    if (!acc[group]) acc[group] = [];
+    acc[group].push(pkg);
+    return acc;
+  }, {});
+
+  const isSearching = searchTerm.length > 0;
 
   return (
     <div className="animate-fade-in" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', paddingBottom: '4rem' }}>
@@ -168,46 +198,75 @@ const PriceBook = ({ category }) => {
             </tr>
           </thead>
           <tbody>
-            {filteredPackages.map((pkg, i) => {
-              const currentDiscount = discounts[pkg.id] ?? 20;
-              // Harga Coret = Harga Jual / (1 - Diskon/100)
-              const calculatedHargaCoret = pkg.hargaJual > 0 && currentDiscount < 100 
-                ? pkg.hargaJual / (1 - (currentDiscount / 100)) 
-                : pkg.hargaJual;
+            {Object.entries(groupedPackages).map(([groupName, pkgs]) => {
+              const isExpanded = expandedGroups[groupName] || isSearching;
               
-              // Bulatkan ke ratusan ribu terdekat agar rapi (opsional, tapi disarankan)
-              const roundedHargaCoret = Math.ceil(calculatedHargaCoret / 100000) * 100000;
-
               return (
-                <tr key={pkg.id} style={{ background: i % 2 === 0 ? 'var(--overlay-bg)' : 'transparent' }}>
-                  <td style={{ fontWeight: 'bold', color: 'var(--text-main)', borderRight: '1px solid var(--border-glass)' }}>{pkg.name}</td>
-                  <td style={{ textAlign: 'right' }}>{formatRupiah(pkg.totalHpp)}</td>
-                  <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatRupiah(pkg.hargaJual)}</td>
-                  <td style={{ textAlign: 'right', borderRight: '1px solid var(--border-glass)', color: pkg.hppPersen > 0.6 ? '#f87171' : '#34d399', background: 'var(--overlay-bg)' }}>
-                    {formatPercent(pkg.hppPersen)}
-                  </td>
-                  <td style={{ textAlign: 'right', color: '#60a5fa', fontWeight: 'bold' }}>{formatRupiah(pkg.margin)}</td>
-                  <td style={{ textAlign: 'right', borderRight: '1px solid var(--border-glass)', color: pkg.marginPersen < 0.4 ? '#f87171' : '#34d399', background: 'var(--overlay-bg)' }}>
-                    {formatPercent(pkg.marginPersen)}
-                  </td>
-                  <td style={{ textAlign: 'right', textDecoration: 'line-through', color: 'var(--text-muted)' }}>{formatRupiah(roundedHargaCoret)}</td>
-                  <td style={{ textAlign: 'center' }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--input-bg)', padding: '0.2rem 0.5rem', borderRadius: '0.25rem', border: '1px solid var(--border-glass)' }}>
-                      <span style={{ fontSize: '0.8rem', marginRight: '0.3rem', color: 'var(--text-muted)' }}>DISKON</span>
-                      <input 
-                        type="number" 
-                        value={currentDiscount} 
-                        onChange={(e) => handleDiscountChange(pkg.id, e.target.value)}
-                        style={{ 
-                          width: '40px', background: 'transparent', border: 'none', 
-                          color: 'var(--text-main)', fontWeight: 'bold', textAlign: 'center',
-                          outline: 'none'
-                        }}
-                      />
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>%</span>
-                    </div>
-                  </td>
-                </tr>
+                <React.Fragment key={groupName}>
+                  {/* Accordion Header */}
+                  <tr 
+                    onClick={() => toggleGroup(groupName)} 
+                    style={{ cursor: 'pointer', background: 'var(--surface-dark)', borderTop: '2px solid var(--border-glass)', transition: 'background 0.2s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--overlay-bg-hover)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'var(--surface-dark)'}
+                  >
+                    <td colSpan="8" style={{ padding: '1rem', fontWeight: 'bold', color: 'var(--primary)', fontSize: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: '4px', background: 'rgba(56, 189, 248, 0.1)', color: 'var(--primary)', transition: 'transform 0.2s' }}>
+                          {isExpanded ? <ChevronDown size={16} /> : <Plus size={16} />}
+                        </span>
+                        <span>{groupName}</span>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 'normal', color: 'var(--text-muted)', background: 'var(--overlay-bg)', padding: '0.2rem 0.6rem', borderRadius: '12px' }}>
+                          {pkgs.length} Paket
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+
+                  {/* Accordion Body */}
+                  {isExpanded && pkgs.map((pkg, i) => {
+                    const currentDiscount = discounts[pkg.id] ?? 20;
+                    // Harga Coret = Harga Jual / (1 - Diskon/100)
+                    const calculatedHargaCoret = pkg.hargaJual > 0 && currentDiscount < 100 
+                      ? pkg.hargaJual / (1 - (currentDiscount / 100)) 
+                      : pkg.hargaJual;
+                    
+                    // Bulatkan ke ratusan ribu terdekat agar rapi (opsional, tapi disarankan)
+                    const roundedHargaCoret = Math.ceil(calculatedHargaCoret / 100000) * 100000;
+
+                    return (
+                      <tr key={pkg.id} style={{ background: i % 2 === 0 ? 'var(--overlay-bg)' : 'transparent', borderTop: '1px solid var(--border-glass)' }}>
+                        <td style={{ paddingLeft: '2.5rem', fontWeight: 'bold', color: 'var(--text-main)', borderRight: '1px solid var(--border-glass)' }}>{pkg.name}</td>
+                        <td style={{ textAlign: 'right' }}>{formatRupiah(pkg.totalHpp)}</td>
+                        <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatRupiah(pkg.hargaJual)}</td>
+                        <td style={{ textAlign: 'right', borderRight: '1px solid var(--border-glass)', color: pkg.hppPersen > 0.6 ? '#f87171' : '#34d399', background: 'var(--overlay-bg)' }}>
+                          {formatPercent(pkg.hppPersen)}
+                        </td>
+                        <td style={{ textAlign: 'right', color: '#60a5fa', fontWeight: 'bold' }}>{formatRupiah(pkg.margin)}</td>
+                        <td style={{ textAlign: 'right', borderRight: '1px solid var(--border-glass)', color: pkg.marginPersen < 0.4 ? '#f87171' : '#34d399', background: 'var(--overlay-bg)' }}>
+                          {formatPercent(pkg.marginPersen)}
+                        </td>
+                        <td style={{ textAlign: 'right', textDecoration: 'line-through', color: 'var(--text-muted)' }}>{formatRupiah(roundedHargaCoret)}</td>
+                        <td style={{ textAlign: 'center' }}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', background: 'var(--input-bg)', padding: '0.2rem 0.5rem', borderRadius: '0.25rem', border: '1px solid var(--border-glass)' }}>
+                            <span style={{ fontSize: '0.8rem', marginRight: '0.3rem', color: 'var(--text-muted)' }}>DISKON</span>
+                            <input 
+                              type="number" 
+                              value={currentDiscount} 
+                              onChange={(e) => handleDiscountChange(pkg.id, e.target.value)}
+                              style={{ 
+                                width: '40px', background: 'transparent', border: 'none', 
+                                color: 'var(--text-main)', fontWeight: 'bold', textAlign: 'center',
+                                outline: 'none'
+                              }}
+                            />
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>%</span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </React.Fragment>
               );
             })}
             {packages.length === 0 && (

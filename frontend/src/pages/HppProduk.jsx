@@ -255,6 +255,26 @@ const HppProduk = ({ category }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('startsWith');
   const [variantFilter, setVariantFilter] = useState('all');
+  const [expandedGroups, setExpandedGroups] = useState({});
+
+  const toggleGroup = (group) => {
+    setExpandedGroups(prev => ({ ...prev, [group]: !prev[group] }));
+  };
+
+  const getGroupName = (name) => {
+    if (!name) return 'Lainnya';
+    const lowerName = name.toLowerCase();
+    if (lowerName.startsWith('intimate wedding')) return 'Intimate Wedding';
+    if (lowerName.startsWith('prewedding') || lowerName.startsWith('prewed')) return 'Prewedding';
+    if (lowerName.startsWith('wedding')) return 'Wedding';
+    if (lowerName.startsWith('engagement') || lowerName.startsWith('lamaran')) return 'Engagement / Lamaran';
+    if (lowerName.startsWith('siraman')) return 'Siraman';
+    if (lowerName.startsWith('akad')) return 'Akad';
+    if (lowerName.startsWith('resepsi')) return 'Resepsi';
+    
+    const firstWord = name.trim().split(' ')[0];
+    return firstWord ? firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase() : 'Lainnya';
+  };
 
   const filteredPackages = packages.filter(pkg => {
     // Filter by Variant first
@@ -274,6 +294,15 @@ const HppProduk = ({ category }) => {
     }
     return pkgNameLower.includes(term);
   });
+
+  const groupedPackages = filteredPackages.reduce((acc, pkg) => {
+    const group = getGroupName(pkg.name);
+    if (!acc[group]) acc[group] = [];
+    acc[group].push(pkg);
+    return acc;
+  }, {});
+
+  const isSearching = searchTerm.length > 0;
 
   return (
     <div className="animate-fade-in" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', paddingBottom: '4rem' }}>
@@ -342,97 +371,126 @@ const HppProduk = ({ category }) => {
             <tbody>
               {loading ? (
                 <tr><td colSpan="11" style={{ padding: 0 }}><Loader text="Memuat data dari database..." /></td></tr>
-              ) : filteredPackages.map((pkg) => {
-                const summary = calculateSummary(pkg);
-                const rowCount = Math.max(pkg.items.length, 1);
+              ) : Object.entries(groupedPackages).map(([groupName, pkgs]) => {
+                const isExpanded = expandedGroups[groupName] || isSearching;
+                
                 return (
-                  <React.Fragment key={pkg.id}>
-                    <tr style={{ borderTop: '2px solid var(--border-glass)' }}>
-                      <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', background: 'var(--overlay-dark)' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                          {editPkgId === pkg.id ? (
-                            <>
-                              <input type="text" className="form-control" style={{ padding: '0.3rem' }} value={editPkgForm.name} onChange={e => setEditPkgForm({ ...editPkgForm, name: e.target.value })} />
-                              <input type="text" className="form-control" style={{ padding: '0.3rem' }} value={editPkgForm.hargaJual ? formatRupiah(editPkgForm.hargaJual) : ''} onChange={e => {
-                                const rawValue = e.target.value.replace(/[^0-9]/g, '');
-                                setEditPkgForm({ ...editPkgForm, hargaJual: rawValue });
-                              }} />
-                              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                                <button className="btn btn-primary" style={{ padding: '0.3rem', flex: 1 }} onClick={() => saveEditPkg(pkg.id)}><Check size={14} /></button>
-                                <button className="btn" style={{ padding: '0.3rem', flex: 1, background: 'var(--overlay-border)' }} onClick={() => setEditPkgId(null)}><X size={14} /></button>
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <strong style={{ fontSize: '1rem', color: '#60a5fa' }}>{pkg.name}</strong>
-                              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                                <button className="btn" onClick={() => { setEditPkgId(pkg.id); setEditPkgForm({ name: pkg.name, hargaJual: pkg.hargaJual }); }} style={{ padding: '0.3rem', color: '#60a5fa', background: 'var(--overlay-light)' }}><Edit2 size={12} /> Edit</button>
-                                <button className="btn" onClick={() => handleDeletePackage(pkg.id)} style={{ padding: '0.3rem', color: '#ef4444', background: 'rgba(239, 68, 68, 0.1)' }}><Trash2 size={12} /> Hapus</button>
-                              </div>
-                            </>
-                          )}
+                  <React.Fragment key={groupName}>
+                    {/* Accordion Header */}
+                    <tr 
+                      onClick={() => toggleGroup(groupName)} 
+                      style={{ cursor: 'pointer', background: 'var(--surface-dark)', borderTop: '2px solid var(--border-glass)', transition: 'background 0.2s' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--overlay-bg-hover)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'var(--surface-dark)'}
+                    >
+                      <td colSpan="11" style={{ padding: '1rem', fontWeight: 'bold', color: 'var(--primary)', fontSize: '1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: '4px', background: 'rgba(56, 189, 248, 0.1)', color: 'var(--primary)', transition: 'transform 0.2s' }}>
+                            {isExpanded ? <ChevronDown size={16} /> : <Plus size={16} />}
+                          </span>
+                          <span>{groupName}</span>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 'normal', color: 'var(--text-muted)', background: 'var(--overlay-bg)', padding: '0.2rem 0.6rem', borderRadius: '12px' }}>
+                            {pkgs.length} Paket
+                          </span>
                         </div>
                       </td>
-
-                      {pkg.items.length > 0 ? (() => {
-                        const item = pkg.items[0];
-                        const cost = item.bb ? Number(item.bb.price) * item.qty : 0;
-                        const persen = summary.totalHpp > 0 ? cost / summary.totalHpp : 0;
-                        return (
-                          <>
-                            <td>{item.bb ? item.bb.name : 'Unknown'}</td>
-                            <td style={{ textAlign: 'center' }}>
-                              <QtyInput initialQty={item.qty} onSave={(val) => handleUpdateItemQty(item.id, val)} />
-                            </td>
-                            <td style={{ textAlign: 'right' }}>{formatRupiah(cost)}</td>
-                            <td style={{ textAlign: 'right', color: 'var(--text-muted)' }}>{formatPercent(persen)}</td>
-                          </>
-                        );
-                      })() : (
-                        <td colSpan="4" style={{ color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center' }}>Belum ada isi paket</td>
-                      )}
-
-                      <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', fontWeight: 'bold' }}>{formatRupiah(summary.totalHpp)}</td>
-                      <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', fontWeight: 'bold' }}>{formatRupiah(pkg.hargaJual)}</td>
-                      <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', color: summary.hppPersen > 0.6 ? '#f87171' : '#34d399' }}>{formatPercent(summary.hppPersen)}</td>
-                      <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', fontWeight: 'bold', color: '#60a5fa' }}>{formatRupiah(summary.margin)}</td>
-                      <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', color: summary.marginPersen < 0.4 ? '#f87171' : '#34d399' }}>{formatPercent(summary.marginPersen)}</td>
-                      {pkg.items.length > 0 ? (
-                        <td style={{ textAlign: 'center' }}>
-                          <button className="btn" onClick={() => handleDeleteItem(pkg.items[0].id)} style={{ padding: '0.3rem', color: '#ef4444', background: 'transparent' }}><X size={14} /></button>
-                        </td>
-                      ) : <td></td>}
                     </tr>
 
-                    {pkg.items.slice(1).map(item => {
-                      const cost = item.bb ? Number(item.bb.price) * item.qty : 0;
-                      const persen = summary.totalHpp > 0 ? cost / summary.totalHpp : 0;
+                    {/* Accordion Body */}
+                    {isExpanded && pkgs.map((pkg) => {
+                      const summary = calculateSummary(pkg);
+                      const rowCount = Math.max(pkg.items.length, 1);
                       return (
-                        <tr key={item.id}>
-                          <td>{item.bb ? item.bb.name : 'Unknown'}</td>
-                          <td style={{ textAlign: 'center' }}>
-                            <QtyInput initialQty={item.qty} onSave={(val) => handleUpdateItemQty(item.id, val)} />
-                          </td>
-                          <td style={{ textAlign: 'right' }}>{formatRupiah(cost)}</td>
-                          <td style={{ textAlign: 'right', color: 'var(--text-muted)' }}>{formatPercent(persen)}</td>
-                          <td style={{ textAlign: 'center' }}>
-                            <button className="btn" onClick={() => handleDeleteItem(item.id)} style={{ padding: '0.3rem', color: '#ef4444', background: 'transparent' }}><X size={14} /></button>
-                          </td>
-                        </tr>
+                        <React.Fragment key={pkg.id}>
+                          <tr style={{ borderTop: '1px solid var(--border-glass)' }}>
+                            <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', background: 'var(--overlay-dark)' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                {editPkgId === pkg.id ? (
+                                  <>
+                                    <input type="text" className="form-control" style={{ padding: '0.3rem' }} value={editPkgForm.name} onChange={e => setEditPkgForm({ ...editPkgForm, name: e.target.value })} />
+                                    <input type="text" className="form-control" style={{ padding: '0.3rem' }} value={editPkgForm.hargaJual ? formatRupiah(editPkgForm.hargaJual) : ''} onChange={e => {
+                                      const rawValue = e.target.value.replace(/[^0-9]/g, '');
+                                      setEditPkgForm({ ...editPkgForm, hargaJual: rawValue });
+                                    }} />
+                                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                      <button className="btn btn-primary" style={{ padding: '0.3rem', flex: 1 }} onClick={() => saveEditPkg(pkg.id)}><Check size={14} /></button>
+                                      <button className="btn" style={{ padding: '0.3rem', flex: 1, background: 'var(--overlay-border)' }} onClick={() => setEditPkgId(null)}><X size={14} /></button>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <strong style={{ fontSize: '0.95rem', color: '#60a5fa' }}>{pkg.name}</strong>
+                                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                      <button className="btn" onClick={() => { setEditPkgId(pkg.id); setEditPkgForm({ name: pkg.name, hargaJual: pkg.hargaJual }); }} style={{ padding: '0.3rem', color: '#60a5fa', background: 'var(--overlay-light)' }}><Edit2 size={12} /> Edit</button>
+                                      <button className="btn" onClick={() => handleDeletePackage(pkg.id)} style={{ padding: '0.3rem', color: '#ef4444', background: 'rgba(239, 68, 68, 0.1)' }}><Trash2 size={12} /> Hapus</button>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+
+                            {pkg.items.length > 0 ? (() => {
+                              const item = pkg.items[0];
+                              const cost = item.bb ? Number(item.bb.price) * item.qty : 0;
+                              const persen = summary.totalHpp > 0 ? cost / summary.totalHpp : 0;
+                              return (
+                                <>
+                                  <td>{item.bb ? item.bb.name : 'Unknown'}</td>
+                                  <td style={{ textAlign: 'center' }}>
+                                    <QtyInput initialQty={item.qty} onSave={(val) => handleUpdateItemQty(item.id, val)} />
+                                  </td>
+                                  <td style={{ textAlign: 'right' }}>{formatRupiah(cost)}</td>
+                                  <td style={{ textAlign: 'right', color: 'var(--text-muted)' }}>{formatPercent(persen)}</td>
+                                </>
+                              );
+                            })() : (
+                              <td colSpan="4" style={{ color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center' }}>Belum ada isi paket</td>
+                            )}
+
+                            <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', fontWeight: 'bold' }}>{formatRupiah(summary.totalHpp)}</td>
+                            <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', fontWeight: 'bold' }}>{formatRupiah(pkg.hargaJual)}</td>
+                            <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', color: summary.hppPersen > 0.6 ? '#f87171' : '#34d399' }}>{formatPercent(summary.hppPersen)}</td>
+                            <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', fontWeight: 'bold', color: '#60a5fa' }}>{formatRupiah(summary.margin)}</td>
+                            <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', color: summary.marginPersen < 0.4 ? '#f87171' : '#34d399' }}>{formatPercent(summary.marginPersen)}</td>
+                            {pkg.items.length > 0 ? (
+                              <td style={{ textAlign: 'center' }}>
+                                <button className="btn" onClick={() => handleDeleteItem(pkg.items[0].id)} style={{ padding: '0.3rem', color: '#ef4444', background: 'transparent' }}><X size={14} /></button>
+                              </td>
+                            ) : <td></td>}
+                          </tr>
+
+                          {pkg.items.slice(1).map(item => {
+                            const cost = item.bb ? Number(item.bb.price) * item.qty : 0;
+                            const persen = summary.totalHpp > 0 ? cost / summary.totalHpp : 0;
+                            return (
+                              <tr key={item.id}>
+                                <td>{item.bb ? item.bb.name : 'Unknown'}</td>
+                                <td style={{ textAlign: 'center' }}>
+                                  <QtyInput initialQty={item.qty} onSave={(val) => handleUpdateItemQty(item.id, val)} />
+                                </td>
+                                <td style={{ textAlign: 'right' }}>{formatRupiah(cost)}</td>
+                                <td style={{ textAlign: 'right', color: 'var(--text-muted)' }}>{formatPercent(persen)}</td>
+                                <td style={{ textAlign: 'center' }}>
+                                  <button className="btn" onClick={() => handleDeleteItem(item.id)} style={{ padding: '0.3rem', color: '#ef4444', background: 'transparent' }}><X size={14} /></button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+
+                          <tr style={{ background: 'var(--overlay-bg)' }}>
+                            <td style={{ padding: 0, minWidth: '300px' }}>
+                              <CustomSelect 
+                                value=""
+                                placeholder="+ Tambah Bahan Baku..."
+                                options={bahanBaku.map(bb => ({ value: bb.id, label: `${bb.name} - ${formatRupiah(bb.price)}` }))}
+                                onChange={(val) => handleAddItem(pkg.id, val)}
+                              />
+                            </td>
+                            <td></td><td></td><td></td><td></td>
+                          </tr>
+                        </React.Fragment>
                       );
                     })}
-
-                    <tr style={{ background: 'var(--overlay-bg)' }}>
-                      <td style={{ padding: 0, minWidth: '300px' }}>
-                        <CustomSelect 
-                          value=""
-                          placeholder="+ Tambah Bahan Baku..."
-                          options={bahanBaku.map(bb => ({ value: bb.id, label: `${bb.name} - ${formatRupiah(bb.price)}` }))}
-                          onChange={(val) => handleAddItem(pkg.id, val)}
-                        />
-                      </td>
-                      <td></td><td></td><td></td><td></td>
-                    </tr>
                   </React.Fragment>
                 );
               })}
