@@ -76,22 +76,84 @@ const PriceBook = ({ category }) => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState('startsWith');
+  const [variantFilter, setVariantFilter] = useState('all');
+
   if (loading) {
     return (
       <div className="animate-fade-in" style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-        <Loader text="Memuat Price Book {category}..." />
+        <Loader text={`Memuat Price Book ${category}...`} />
       </div>
     );
   }
 
+  const filteredPackages = packages.filter(pkg => {
+    const pkgNameLower = pkg.name.toLowerCase();
+    
+    // Filter by Variant first
+    if (variantFilter === 'no_video' && !pkgNameLower.includes('-vidio') && !pkgNameLower.includes('- vidio')) {
+      return false;
+    }
+    if (variantFilter === 'with_video' && !pkgNameLower.includes('+vidio') && !pkgNameLower.includes('+ vidio')) {
+      return false;
+    }
+
+    // Filter by Search Term
+    if (!searchTerm) return true;
+    const term = searchTerm.toLowerCase();
+    if (filterType === 'startsWith') {
+      return pkgNameLower.startsWith(term);
+    }
+    return pkgNameLower.includes(term);
+  });
+
   return (
     <div className="animate-fade-in" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', paddingBottom: '4rem' }}>
-      <div className="page-header">
-        <h1 className="page-title">Price Book - {category}</h1>
-        <p className="page-subtitle">Rangkuman HPP, Harga Jual, dan Margin untuk seluruh paket {category}</p>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h1 className="page-title">Price Book - {category}</h1>
+          <p className="page-subtitle">Rangkuman HPP, Harga Jual, dan Margin untuk seluruh paket {category}</p>
+        </div>
+        
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', background: 'var(--surface-dark)', padding: '0.5rem 1rem', borderRadius: '0.5rem', border: '1px solid var(--border-glass)' }}>
+          <select 
+            className="form-control" 
+            style={{ width: 'auto', border: 'none', background: 'transparent', padding: '0.2rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}
+            value={variantFilter}
+            onChange={(e) => setVariantFilter(e.target.value)}
+          >
+            <option value="all">Semua Varian</option>
+            <option value="no_video">Tanpa Vidio (-Vidio)</option>
+            <option value="with_video">Dengan Vidio (+Vidio)</option>
+          </select>
+          <div style={{ width: '1px', height: '20px', background: 'var(--border-glass)' }}></div>
+          <select 
+            className="form-control" 
+            style={{ width: 'auto', border: 'none', background: 'transparent', padding: '0.2rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+          >
+            <option value="startsWith">Berawal dari kata...</option>
+            <option value="contains">Mengandung kata...</option>
+          </select>
+          <div style={{ width: '1px', height: '20px', background: 'var(--border-glass)' }}></div>
+          <input 
+            type="text" 
+            className="form-control" 
+            placeholder="Cari nama paket/produk..." 
+            style={{ border: 'none', background: 'transparent', width: '250px', outline: 'none' }}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
       </div>
 
       <div className="glass-panel" style={{ padding: '2rem', overflowX: 'auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', color: 'var(--text-main)', margin: 0 }}>Daftar Price Book</h2>
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Menampilkan {filteredPackages.length} Paket</span>
+        </div>
         <table className="data-table" style={{ minWidth: '1000px', fontSize: '0.9rem' }}>
           <thead>
             <tr style={{ background: 'var(--primary)' }}>
@@ -106,7 +168,7 @@ const PriceBook = ({ category }) => {
             </tr>
           </thead>
           <tbody>
-            {packages.map((pkg, i) => {
+            {filteredPackages.map((pkg, i) => {
               const currentDiscount = discounts[pkg.id] ?? 20;
               // Harga Coret = Harga Jual / (1 - Diskon/100)
               const calculatedHargaCoret = pkg.hargaJual > 0 && currentDiscount < 100 
@@ -152,6 +214,13 @@ const PriceBook = ({ category }) => {
               <tr>
                 <td colSpan="8" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
                   Belum ada paket HPP Produk.
+                </td>
+              </tr>
+            )}
+            {packages.length > 0 && filteredPackages.length === 0 && (
+              <tr>
+                <td colSpan="8" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                  Tidak ada paket yang sesuai dengan pencarian Anda.
                 </td>
               </tr>
             )}
