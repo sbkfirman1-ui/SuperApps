@@ -272,7 +272,7 @@ const InputTransaksi = () => {
                 <CustomSelect 
                   value={formData.productId}
                   placeholder={`-- Pilih Paket ${formData.category} --`}
-                  options={activeProducts.map(p => ({ value: p.id, label: p.name }))}
+                  options={activeProducts.map(p => ({ value: p.id, label: `${p.name} - ${formatRupiah(p.hargaJual)}` }))}
                   onChange={handleProductChange}
                 />
               </div>
