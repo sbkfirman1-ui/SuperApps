@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Trash2, Edit2, Check, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import Loader from '../components/Loader';
+import { confirmDelete, showAlert } from '../utils/swal';
 
 const formatRupiah = (number) => {
   if (isNaN(number) || number === null || number === '') return 'Rp.0';
@@ -25,7 +26,7 @@ const HppBahanBaku = ({ category }) => {
 
     if (error) {
       console.error('Supabase error:', error);
-      alert('Error fetching data: ' + error.message);
+      showAlert('Error fetching data: ' + error.message, 'error');
     }
 
     if (!error) setBahanBaku(data || []);
@@ -51,7 +52,7 @@ const HppBahanBaku = ({ category }) => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Hapus bahan baku ini?')) {
+    if (await confirmDelete('Hapus bahan baku ini?')) {
       await supabase.from('hpp_bahan_baku').delete().eq('id', id);
       fetchData(true);
     }

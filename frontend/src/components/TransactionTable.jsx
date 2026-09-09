@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Download, Trash2, Edit2, Check, X } from 'lucide-react';
+import { confirmDelete } from '../utils/swal';
 
 const formatRupiah = (number) => {
   if (isNaN(number) || number === null || number === '') return 'Rp.0';
@@ -35,8 +36,8 @@ const TransactionTable = ({ category, data, onResetAll, onUpdateRow, onDeleteRow
     setActiveProduct('');
   };
   
-  const handleResetAllData = () => {
-    if (window.confirm('Yakin ingin menghapus semua data? Aksi ini tidak dapat dibatalkan.')) {
+  const handleResetAllData = async () => {
+    if (await confirmDelete('Yakin ingin menghapus semua data? Aksi ini tidak dapat dibatalkan.')) {
       if (onResetAll) onResetAll();
     }
   };
@@ -244,8 +245,8 @@ const TransactionTable = ({ category, data, onResetAll, onUpdateRow, onDeleteRow
                             }} style={{ padding: '0.3rem', color: '#60a5fa', background: 'transparent' }} title="Edit Data">
                               <Edit2 size={16} />
                             </button>
-                            <button className="btn" onClick={() => {
-                              if (window.confirm('Yakin ingin menghapus transaksi ini?')) {
+                            <button className="btn" onClick={async () => {
+                              if (await confirmDelete('Yakin ingin menghapus transaksi ini?')) {
                                 if (onDeleteRow) onDeleteRow(row.id);
                               }
                             }} style={{ padding: '0.3rem', color: '#ef4444', background: 'transparent' }} title="Hapus Data">

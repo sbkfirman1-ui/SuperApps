@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Download, Trash2 } from 'lucide-react';
+import { confirmDelete } from '../utils/swal';
 
 const formatRupiah = (number) => {
   if (isNaN(number) || number === null || number === '') return 'Rp.0';
@@ -30,8 +31,8 @@ const FinanceTable = ({ category, data, onResetAll, onDeleteRow }) => {
     setActivePayment('');
   };
   
-  const handleResetAllData = () => {
-    if (window.confirm('Yakin ingin menghapus semua data? Aksi ini tidak dapat dibatalkan.')) {
+  const handleResetAllData = async () => {
+    if (await confirmDelete('Yakin ingin menghapus semua data? Aksi ini tidak dapat dibatalkan.')) {
       if (onResetAll) onResetAll();
     }
   };
@@ -168,8 +169,8 @@ const FinanceTable = ({ category, data, onResetAll, onDeleteRow }) => {
                     <td style={{ color: '#f87171' }}>{formatRupiah(row.pengeluaran)}</td>
                     <td style={{ fontWeight: 'bold' }}>{formatRupiah(row.saldo)}</td>
                     <td style={{ textAlign: 'center' }}>
-                      <button className="btn" onClick={() => {
-                        if (window.confirm('Yakin ingin menghapus data ini?')) {
+                      <button className="btn" onClick={async () => {
+                        if (await confirmDelete('Yakin ingin menghapus data ini?')) {
                           if (onDeleteRow) onDeleteRow(row.id);
                         }
                       }} style={{ padding: '0.3rem', color: '#ef4444', background: 'transparent' }} title="Hapus Data">

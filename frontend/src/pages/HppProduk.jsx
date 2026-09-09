@@ -3,6 +3,7 @@ import Loader from '../components/Loader';
 import { createPortal } from 'react-dom';
 import { Plus, Trash2, Edit2, Check, X, ChevronDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { confirmDelete, showAlert } from '../utils/swal';
 
 const formatRupiah = (number) => {
   if (isNaN(number) || number === null || number === '') return 'Rp.0';
@@ -212,7 +213,7 @@ const HppProduk = ({ category }) => {
   };
 
   const handleDeletePackage = async (id) => {
-    if (window.confirm('Hapus paket ini beserta isinya?')) {
+    if (await confirmDelete('Hapus paket ini beserta isinya?')) {
       await supabase.from('hpp_packages').delete().eq('id', id);
       fetchData(true);
     }
@@ -228,7 +229,7 @@ const HppProduk = ({ category }) => {
       setEditPkgId(null);
       fetchData(true);
     } catch (err) {
-      alert("Gagal menyimpan: " + err.message);
+      showAlert("Gagal menyimpan: " + err.message, 'error');
     }
   };
 
