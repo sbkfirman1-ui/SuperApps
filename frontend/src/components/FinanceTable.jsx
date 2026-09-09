@@ -128,7 +128,7 @@ const FinanceTable = ({ category, data, onResetAll, onDeleteRow }) => {
               <button className="btn btn-primary" onClick={exportToCSV} style={{ padding: '0.5rem 1rem' }}>
                 <Download size={16} /> Export
               </button>
-              <button className="btn btn-danger" onClick={handleResetAllData} style={{ padding: '0.5rem 1rem', background: '#ef4444', color: 'white' }}>
+              <button className="btn btn-danger" onClick={handleResetAllData} style={{ padding: '0.5rem 1rem', background: 'var(--text-danger)', color: 'white' }}>
                 <Trash2 size={16} /> Reset Data
               </button>
             </div>
@@ -158,22 +158,22 @@ const FinanceTable = ({ category, data, onResetAll, onDeleteRow }) => {
                     <td>{row.keterangan}</td>
                     <td>
                       <span style={{ 
-                        color: row.kategori === 'Pemasukan' ? '#34d399' : '#f87171',
+                        color: row.kategori === 'Pemasukan' ? 'var(--text-success)' : 'var(--text-danger)',
                         fontWeight: 'bold'
                       }}>
                         {row.kategori}
                       </span>
                     </td>
                     <td>{row.jenisPembayaran}</td>
-                    <td style={{ color: '#34d399' }}>{formatRupiah(row.pemasukan)}</td>
-                    <td style={{ color: '#f87171' }}>{formatRupiah(row.pengeluaran)}</td>
+                    <td style={{ color: 'var(--text-success)' }}>{formatRupiah(row.pemasukan)}</td>
+                    <td style={{ color: 'var(--text-danger)' }}>{formatRupiah(row.pengeluaran)}</td>
                     <td style={{ fontWeight: 'bold' }}>{formatRupiah(row.saldo)}</td>
                     <td style={{ textAlign: 'center' }}>
                       <button className="btn" onClick={async () => {
                         if (await confirmDelete('Yakin ingin menghapus data ini?')) {
                           if (onDeleteRow) onDeleteRow(row.id);
                         }
-                      }} style={{ padding: '0.3rem', color: '#ef4444', background: 'transparent' }} title="Hapus Data">
+                      }} style={{ padding: '0.3rem', color: 'var(--text-danger)', background: 'transparent' }} title="Hapus Data">
                         <Trash2 size={16} />
                       </button>
                     </td>

@@ -93,7 +93,7 @@ const Setting = () => {
               const isHidden = hiddenPackages.includes(pkg.id);
               return (
                 <tr key={pkg.id} style={{ opacity: isHidden ? 0.6 : 1 }}>
-                  <td style={{ fontWeight: 500, color: isHidden ? 'var(--text-muted)' : '#60a5fa' }}>{pkg.name}</td>
+                  <td style={{ fontWeight: 500, color: isHidden ? 'var(--text-muted)' : 'var(--text-primary)' }}>{pkg.name}</td>
                   <td style={{ textAlign: 'right', fontWeight: 'bold' }}>Rp.{Number(pkg.hargaJual).toLocaleString('id-ID')}</td>
                   <td style={{ textAlign: 'center' }}>
                     <span className={`badge ${isHidden ? 'bg-danger' : 'bg-success'}`}>
@@ -108,7 +108,7 @@ const Setting = () => {
                         padding: '0.4rem 0.8rem', 
                         fontSize: '0.85rem',
                         background: isHidden ? 'rgba(52, 211, 153, 0.15)' : 'var(--danger-bg)',
-                        color: isHidden ? '#34d399' : '#f87171'
+                        color: isHidden ? 'var(--text-success)' : 'var(--text-danger)'
                       }}
                     >
                       {isHidden ? 'Tampilkan' : 'Sembunyikan'}
@@ -220,7 +220,7 @@ const Setting = () => {
                           <option value="Pengeluaran">Pengeluaran</option>
                         </select>
                       ) : (
-                        <span style={{ color: c.type === 'Pemasukan' ? '#34d399' : '#f87171', fontWeight: 600 }}>
+                        <span style={{ color: c.type === 'Pemasukan' ? 'var(--text-success)' : 'var(--text-danger)', fontWeight: 600 }}>
                           {c.type}
                         </span>
                       )}
@@ -238,7 +238,7 @@ const Setting = () => {
                           )}
                         </select>
                       ) : (
-                        <span style={{ color: c.type === 'Pemasukan' ? '#34d399' : '#f87171', fontWeight: 600 }}>
+                        <span style={{ color: c.type === 'Pemasukan' ? 'var(--text-success)' : 'var(--text-danger)', fontWeight: 600 }}>
                           {c.group || c.type}
                         </span>
                       )}
@@ -246,13 +246,13 @@ const Setting = () => {
                     <td style={{ textAlign: 'right' }}>
                       {editFinanceId === c.id ? (
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                          <button className="btn" onClick={() => saveEditFinance(c.id)} style={{ padding: '0.4rem', color: '#34d399', background: 'transparent' }} title="Simpan"><Check size={16} /></button>
+                          <button className="btn" onClick={() => saveEditFinance(c.id)} style={{ padding: '0.4rem', color: 'var(--text-success)', background: 'transparent' }} title="Simpan"><Check size={16} /></button>
                           <button className="btn" onClick={() => setEditFinanceId(null)} style={{ padding: '0.4rem', color: 'var(--text-muted)', background: 'transparent' }} title="Batal"><X size={16} /></button>
                         </div>
                       ) : (
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                          <button className="btn" onClick={() => startEditFinance(c)} style={{ padding: '0.4rem', color: '#60a5fa', background: 'transparent' }} title="Edit"><Edit2 size={16} /></button>
-                          <button className="btn" onClick={() => deleteFinanceCategory(c.id)} style={{ padding: '0.4rem', color: '#ef4444', background: 'transparent' }} title="Hapus"><Trash2 size={16} /></button>
+                          <button className="btn" onClick={() => startEditFinance(c)} style={{ padding: '0.4rem', color: 'var(--text-primary)', background: 'transparent' }} title="Edit"><Edit2 size={16} /></button>
+                          <button className="btn" onClick={() => deleteFinanceCategory(c.id)} style={{ padding: '0.4rem', color: 'var(--text-danger)', background: 'transparent' }} title="Hapus"><Trash2 size={16} /></button>
                         </div>
                       )}
                     </td>

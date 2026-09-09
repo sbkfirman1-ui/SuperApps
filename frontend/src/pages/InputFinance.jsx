@@ -198,7 +198,7 @@ const InputFinance = () => {
           marginBottom: '1.5rem',
           background: message.type === 'success' ? 'rgba(52, 211, 153, 0.15)' : 'rgba(248, 113, 113, 0.15)',
           border: `1px solid ${message.type === 'success' ? 'rgba(52, 211, 153, 0.4)' : 'rgba(248, 113, 113, 0.4)'}`,
-          color: message.type === 'success' ? '#34d399' : '#f87171',
+          color: message.type === 'success' ? 'var(--text-success)' : 'var(--text-danger)',
           fontWeight: '600'
         }}>
           {message.text}
@@ -238,11 +238,11 @@ const InputFinance = () => {
                 name="arus_kas"
                 value={formData.arus_kas}
                 onChange={handleJenisChange}
-                style={{ color: isPemasukan ? '#34d399' : '#f87171', fontWeight: 'bold' }}
+                style={{ color: isPemasukan ? 'var(--text-success)' : 'var(--text-danger)', fontWeight: 'bold' }}
                 required
               >
-                <option value="Pemasukan" style={{ color: '#34d399' }}>Pemasukan</option>
-                <option value="Pengeluaran" style={{ color: '#f87171' }}>Pengeluaran</option>
+                <option value="Pemasukan" style={{ color: 'var(--text-success)' }}>Pemasukan</option>
+                <option value="Pengeluaran" style={{ color: 'var(--text-danger)' }}>Pengeluaran</option>
               </select>
             </div>
             <div className="form-group">

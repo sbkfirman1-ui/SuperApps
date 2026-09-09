@@ -1,8 +1,8 @@
 import Swal from 'sweetalert2';
 
 export const customSwal = Swal.mixin({
-  background: '#1a1f2e', // var(--bg-secondary) equivalent
-  color: '#f8fafc', // var(--text-main) equivalent
+  background: 'var(--bg-secondary)',
+  color: 'var(--text-main)',
   customClass: {
     popup: 'glass-panel',
     confirmButton: 'btn btn-primary',
@@ -16,7 +16,7 @@ export const confirmDelete = async (text = 'Yakin ingin menghapus data ini?') =>
     title: 'Konfirmasi',
     text: text,
     icon: 'warning',
-    iconColor: '#ef4444',
+    iconColor: 'var(--text-danger)',
     showCancelButton: true,
     confirmButtonText: 'Ya, Lanjutkan',
     cancelButtonText: 'Batal',

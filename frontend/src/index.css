@@ -39,6 +39,11 @@
   --danger-border: var(--danger-border);
   --warning-bg: var(--warning-bg);
   --warning-border: var(--warning-border);
+  
+  --text-primary: var(--text-primary);
+  --text-success: var(--text-success);
+  --text-danger: var(--text-danger);
+  --text-warning: var(--text-warning);
 }
 
 [data-theme="light"] {
@@ -73,6 +78,11 @@
   --danger-border: var(--danger-border);
   --warning-bg: rgba(245, 158, 11, 0.1);
   --warning-border: var(--warning-border);
+  
+  --text-primary: #2563eb;
+  --text-success: #059669;
+  --text-danger: #dc2626;
+  --text-warning: #d97706;
 }
 
 :root {

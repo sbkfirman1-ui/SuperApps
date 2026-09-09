@@ -123,13 +123,13 @@ const HppBahanBaku = ({ category }) => {
                   <td style={{ textAlign: 'right' }}>
                     {editId === item.id ? (
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                        <button className="btn" onClick={() => saveEdit(item.id)} style={{ padding: '0.4rem', color: '#34d399', background: 'transparent' }} title="Simpan"><Check size={16} /></button>
+                        <button className="btn" onClick={() => saveEdit(item.id)} style={{ padding: '0.4rem', color: 'var(--text-success)', background: 'transparent' }} title="Simpan"><Check size={16} /></button>
                         <button className="btn" onClick={() => setEditId(null)} style={{ padding: '0.4rem', color: 'var(--text-muted)', background: 'transparent' }} title="Batal"><X size={16} /></button>
                       </div>
                     ) : (
                       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                        <button className="btn" onClick={() => startEdit(item)} style={{ padding: '0.4rem', color: '#60a5fa', background: 'transparent' }} title="Edit"><Edit2 size={16} /></button>
-                        <button className="btn" onClick={() => handleDelete(item.id)} style={{ padding: '0.4rem', color: '#ef4444', background: 'transparent' }} title="Hapus"><Trash2 size={16} /></button>
+                        <button className="btn" onClick={() => startEdit(item)} style={{ padding: '0.4rem', color: 'var(--text-primary)', background: 'transparent' }} title="Edit"><Edit2 size={16} /></button>
+                        <button className="btn" onClick={() => handleDelete(item.id)} style={{ padding: '0.4rem', color: 'var(--text-danger)', background: 'transparent' }} title="Hapus"><Trash2 size={16} /></button>
                       </div>
                     )}
                   </td>
@@ -143,7 +143,7 @@ const HppBahanBaku = ({ category }) => {
               <tfoot>
                 <tr style={{ background: 'var(--overlay-bg-hover)', fontWeight: 'bold' }}>
                   <td colSpan="3" style={{ textAlign: 'right' }}>Total Estimasi Cost:</td>
-                  <td colSpan="2" style={{ color: '#34d399' }}>{formatRupiah(totalCost)}</td>
+                  <td colSpan="2" style={{ color: 'var(--text-success)' }}>{formatRupiah(totalCost)}</td>
                 </tr>
               </tfoot>
             )}
@@ -151,7 +151,7 @@ const HppBahanBaku = ({ category }) => {
         </div>
 
         <div style={{ background: 'var(--surface-dark)', padding: '1.5rem', borderRadius: '0.5rem', border: '1px dashed var(--border-glass)' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '1rem', color: '#60a5fa' }}>Tambah Bahan Baku Baru</h3>
+          <h3 style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '1rem', color: 'var(--text-primary)' }}>Tambah Bahan Baku Baru</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '4fr 2fr 3fr', gap: '1rem', marginBottom: '1.5rem' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '0.85rem' }}>Bahan Baku</label>

@@ -234,7 +234,7 @@ const Dashboard = ({ category }) => {
     setFilterTrigger(prev => prev + 1);
   };
 
-  const COLORS = ['#60a5fa', '#34d399', '#fbbf24', '#f87171', '#a78bfa'];
+  const COLORS = ['var(--text-primary)', 'var(--text-success)', 'var(--text-warning)', 'var(--text-danger)', '#a78bfa'];
   const { totalPendapatan, totalTransaksi, piutangBerjalan, lunasCount, lunasValue, lunasTx, dpCount, dpValue, dpTx, belumLunasCount, belumLunasValue, belumLunasTx, topProducts, topRevenueProducts, dataSales, cashFlowSaldo, totalTransfer, totalCash, totalPemasukan, totalPengeluaran, labaBersihTotal, netMarginTotal } = stats;
 
   return (
@@ -260,7 +260,7 @@ const Dashboard = ({ category }) => {
               <Filter size={14} /> Terapkan
             </button>
             {isFilterApplied && (
-              <button className="btn" onClick={handleClearFilter} style={{ padding: '0.4rem 1rem', background: 'var(--danger-bg)', color: '#ef4444', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+              <button className="btn" onClick={handleClearFilter} style={{ padding: '0.4rem 1rem', background: 'var(--danger-bg)', color: 'var(--text-danger)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                 <X size={14} /> Hapus
               </button>
             )}
@@ -281,10 +281,10 @@ const Dashboard = ({ category }) => {
               
               <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.15s' }}>
                 <div className="summary-title">Net Margin</div>
-                <div className="summary-value" style={{ fontSize: '1.4rem', color: netMarginTotal >= 15 ? '#34d399' : '#f87171' }}>
+                <div className="summary-value" style={{ fontSize: '1.4rem', color: netMarginTotal >= 15 ? 'var(--text-success)' : 'var(--text-danger)' }}>
                   {formatRupiah(labaBersihTotal)} ({netMarginTotal.toFixed(1)}%)
                 </div>
-                <div className="summary-change" style={{ color: netMarginTotal >= 15 ? '#34d399' : '#f87171' }}>
+                <div className="summary-change" style={{ color: netMarginTotal >= 15 ? 'var(--text-success)' : 'var(--text-danger)' }}>
                   <TrendingUp size={16} style={{ transform: netMarginTotal < 15 ? 'scaleY(-1)' : 'none' }} /> 
                   Target 15%
                 </div>
@@ -293,10 +293,10 @@ const Dashboard = ({ category }) => {
               
               <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.2s' }}>
                 <div className="summary-title">Cash Flow (Sisa Saldo)</div>
-                <div className="summary-value" style={{ fontSize: '1.75rem', color: cashFlowSaldo >= 0 ? '#34d399' : '#f87171' }}>
+                <div className="summary-value" style={{ fontSize: '1.75rem', color: cashFlowSaldo >= 0 ? 'var(--text-success)' : 'var(--text-danger)' }}>
                   {formatRupiah(cashFlowSaldo)}
                 </div>
-                <div className="summary-change" style={{ color: cashFlowSaldo >= 0 ? '#34d399' : '#f87171' }}>
+                <div className="summary-change" style={{ color: cashFlowSaldo >= 0 ? 'var(--text-success)' : 'var(--text-danger)' }}>
                   <TrendingUp size={16} style={{ transform: cashFlowSaldo < 0 ? 'scaleY(-1)' : 'none' }} /> 
                   {isFilterApplied ? 'Bulan Terpilih' : 'Total Saldo Finance'}
                 </div>
@@ -305,7 +305,7 @@ const Dashboard = ({ category }) => {
 
               <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.25s' }}>
                 <div className="summary-title">Total Pemasukan (Finance)</div>
-                <div className="summary-value" style={{ fontSize: '1.75rem', color: '#34d399' }}>
+                <div className="summary-value" style={{ fontSize: '1.75rem', color: 'var(--text-success)' }}>
                   {formatRupiah(totalPemasukan)}
                 </div>
                 <div className="summary-change change-positive">
@@ -316,7 +316,7 @@ const Dashboard = ({ category }) => {
 
               <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.3s' }}>
                 <div className="summary-title">Total Pengeluaran (Finance)</div>
-                <div className="summary-value" style={{ fontSize: '1.75rem', color: '#f87171' }}>
+                <div className="summary-value" style={{ fontSize: '1.75rem', color: 'var(--text-danger)' }}>
                   {formatRupiah(totalPengeluaran)}
                 </div>
                 <div className="summary-change change-negative">
@@ -327,10 +327,10 @@ const Dashboard = ({ category }) => {
 
               <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.35s' }}>
                 <div className="summary-title">Total Uang Transfer</div>
-                <div className="summary-value" style={{ fontSize: '1.75rem', color: totalTransfer >= 0 ? '#3b82f6' : '#f87171' }}>
+                <div className="summary-value" style={{ fontSize: '1.75rem', color: totalTransfer >= 0 ? '#3b82f6' : 'var(--text-danger)' }}>
                   {formatRupiah(totalTransfer)}
                 </div>
-                <div className="summary-change" style={{ color: totalTransfer >= 0 ? '#3b82f6' : '#f87171' }}>
+                <div className="summary-change" style={{ color: totalTransfer >= 0 ? '#3b82f6' : 'var(--text-danger)' }}>
                   <TrendingUp size={16} style={{ transform: totalTransfer < 0 ? 'scaleY(-1)' : 'none' }} /> 
                   Saldo Transfer
                 </div>
@@ -339,10 +339,10 @@ const Dashboard = ({ category }) => {
 
               <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.4s' }}>
                 <div className="summary-title">Total Uang Cash</div>
-                <div className="summary-value" style={{ fontSize: '1.75rem', color: totalCash >= 0 ? '#10b981' : '#f87171' }}>
+                <div className="summary-value" style={{ fontSize: '1.75rem', color: totalCash >= 0 ? '#10b981' : 'var(--text-danger)' }}>
                   {formatRupiah(totalCash)}
                 </div>
-                <div className="summary-change" style={{ color: totalCash >= 0 ? '#10b981' : '#f87171' }}>
+                <div className="summary-change" style={{ color: totalCash >= 0 ? '#10b981' : 'var(--text-danger)' }}>
                   <TrendingUp size={16} style={{ transform: totalCash < 0 ? 'scaleY(-1)' : 'none' }} /> 
                   Saldo Tunai
                 </div>
@@ -381,20 +381,20 @@ const Dashboard = ({ category }) => {
 
               <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.65s', cursor: 'pointer', transition: 'transform 0.2s ease, box-shadow 0.2s ease' }} onClick={() => openModal('Daftar Transaksi: Lunas', lunasTx)} title="Klik untuk melihat detail">
                 <div className="summary-title">Status: Lunas</div>
-                <div className="summary-value" style={{ fontSize: '1.4rem', color: '#34d399' }}>{formatRupiah(lunasValue)}</div>
-                <div className="summary-change" style={{ color: '#34d399' }}>{lunasCount} Transaksi Selesai</div>
+                <div className="summary-value" style={{ fontSize: '1.4rem', color: 'var(--text-success)' }}>{formatRupiah(lunasValue)}</div>
+                <div className="summary-change" style={{ color: 'var(--text-success)' }}>{lunasCount} Transaksi Selesai</div>
                 <CheckCircle className="summary-card-icon" size={32} />
               </div>
               <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.7s', cursor: 'pointer', transition: 'transform 0.2s ease, box-shadow 0.2s ease' }} onClick={() => openModal('Daftar Transaksi: DP', dpTx)} title="Klik untuk melihat detail">
                 <div className="summary-title">Status: DP</div>
-                <div className="summary-value" style={{ fontSize: '1.4rem', color: '#fbbf24' }}>{formatRupiah(dpValue)}</div>
-                <div className="summary-change" style={{ color: '#fbbf24' }}>{dpCount} Transaksi Berjalan</div>
+                <div className="summary-value" style={{ fontSize: '1.4rem', color: 'var(--text-warning)' }}>{formatRupiah(dpValue)}</div>
+                <div className="summary-change" style={{ color: 'var(--text-warning)' }}>{dpCount} Transaksi Berjalan</div>
                 <Clock className="summary-card-icon" size={32} />
               </div>
               <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.75s', cursor: 'pointer', transition: 'transform 0.2s ease, box-shadow 0.2s ease' }} onClick={() => openModal('Daftar Transaksi: Belum Lunas', belumLunasTx)} title="Klik untuk melihat detail">
                 <div className="summary-title">Status: Belum Lunas</div>
-                <div className="summary-value" style={{ fontSize: '1.4rem', color: '#f87171' }}>{formatRupiah(belumLunasValue)}</div>
-                <div className="summary-change" style={{ color: '#f87171' }}>{belumLunasCount} Transaksi Menunggu</div>
+                <div className="summary-value" style={{ fontSize: '1.4rem', color: 'var(--text-danger)' }}>{formatRupiah(belumLunasValue)}</div>
+                <div className="summary-change" style={{ color: 'var(--text-danger)' }}>{belumLunasCount} Transaksi Menunggu</div>
                 <XCircle className="summary-card-icon" size={32} />
               </div>
             </div>
@@ -414,8 +414,8 @@ const Dashboard = ({ category }) => {
                     formatter={(value) => formatRupiah(value)}
                   />
                   <Legend verticalAlign="top" height={36} />
-                  <Line type="monotone" dataKey="pemasukan" name="Total Pemasukan" stroke="#34d399" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 8 }} />
-                  <Line type="monotone" dataKey="pengeluaran" name="Total Pengeluaran" stroke="#f87171" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 8 }} />
+                  <Line type="monotone" dataKey="pemasukan" name="Total Pemasukan" stroke="var(--text-success)" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 8 }} />
+                  <Line type="monotone" dataKey="pengeluaran" name="Total Pengeluaran" stroke="var(--text-danger)" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 8 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -536,7 +536,7 @@ const Dashboard = ({ category }) => {
                           <td style={{ padding: '0.75rem', color: 'var(--text-main)' }}>{tx.productName}</td>
                           <td style={{ padding: '0.75rem', color: 'var(--text-main)', textAlign: 'right' }}>{formatRupiah(price)}</td>
                           <td style={{ padding: '0.75rem', color: 'var(--text-main)', textAlign: 'right' }}>{formatRupiah(dp)}</td>
-                          <td style={{ padding: '0.75rem', color: sisa > 0 ? '#f87171' : 'var(--text-main)', textAlign: 'right', fontWeight: sisa > 0 ? 'bold' : 'normal' }}>
+                          <td style={{ padding: '0.75rem', color: sisa > 0 ? 'var(--text-danger)' : 'var(--text-main)', textAlign: 'right', fontWeight: sisa > 0 ? 'bold' : 'normal' }}>
                             {formatRupiah(sisa)}
                           </td>
                         </tr>

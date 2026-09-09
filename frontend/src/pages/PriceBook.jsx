@@ -239,11 +239,11 @@ const PriceBook = ({ category }) => {
                         <td style={{ paddingLeft: '2.5rem', fontWeight: 'bold', color: 'var(--text-main)', borderRight: '1px solid var(--border-glass)' }}>{pkg.name}</td>
                         <td style={{ textAlign: 'right' }}>{formatRupiah(pkg.totalHpp)}</td>
                         <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatRupiah(pkg.hargaJual)}</td>
-                        <td style={{ textAlign: 'right', borderRight: '1px solid var(--border-glass)', color: pkg.hppPersen > 0.6 ? '#f87171' : '#34d399', background: 'var(--overlay-bg)' }}>
+                        <td style={{ textAlign: 'right', borderRight: '1px solid var(--border-glass)', color: pkg.hppPersen > 0.6 ? 'var(--text-danger)' : 'var(--text-success)', background: 'var(--overlay-bg)' }}>
                           {formatPercent(pkg.hppPersen)}
                         </td>
-                        <td style={{ textAlign: 'right', color: '#60a5fa', fontWeight: 'bold' }}>{formatRupiah(pkg.margin)}</td>
-                        <td style={{ textAlign: 'right', borderRight: '1px solid var(--border-glass)', color: pkg.marginPersen < 0.4 ? '#f87171' : '#34d399', background: 'var(--overlay-bg)' }}>
+                        <td style={{ textAlign: 'right', color: 'var(--text-primary)', fontWeight: 'bold' }}>{formatRupiah(pkg.margin)}</td>
+                        <td style={{ textAlign: 'right', borderRight: '1px solid var(--border-glass)', color: pkg.marginPersen < 0.4 ? 'var(--text-danger)' : 'var(--text-success)', background: 'var(--overlay-bg)' }}>
                           {formatPercent(pkg.marginPersen)}
                         </td>
                         <td style={{ textAlign: 'right', textDecoration: 'line-through', color: 'var(--text-muted)' }}>{formatRupiah(roundedHargaCoret)}</td>

@@ -420,10 +420,10 @@ const HppProduk = ({ category }) => {
                                   </>
                                 ) : (
                                   <>
-                                    <strong style={{ fontSize: '0.95rem', color: '#60a5fa' }}>{pkg.name}</strong>
+                                    <strong style={{ fontSize: '0.95rem', color: 'var(--text-primary)' }}>{pkg.name}</strong>
                                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                                      <button className="btn" onClick={() => { setEditPkgId(pkg.id); setEditPkgForm({ name: pkg.name, hargaJual: pkg.hargaJual }); }} style={{ padding: '0.3rem', color: '#60a5fa', background: 'var(--overlay-light)' }}><Edit2 size={12} /> Edit</button>
-                                      <button className="btn" onClick={() => handleDeletePackage(pkg.id)} style={{ padding: '0.3rem', color: '#ef4444', background: 'rgba(239, 68, 68, 0.1)' }}><Trash2 size={12} /> Hapus</button>
+                                      <button className="btn" onClick={() => { setEditPkgId(pkg.id); setEditPkgForm({ name: pkg.name, hargaJual: pkg.hargaJual }); }} style={{ padding: '0.3rem', color: 'var(--text-primary)', background: 'var(--overlay-light)' }}><Edit2 size={12} /> Edit</button>
+                                      <button className="btn" onClick={() => handleDeletePackage(pkg.id)} style={{ padding: '0.3rem', color: 'var(--text-danger)', background: 'rgba(239, 68, 68, 0.1)' }}><Trash2 size={12} /> Hapus</button>
                                     </div>
                                   </>
                                 )}
@@ -450,12 +450,12 @@ const HppProduk = ({ category }) => {
 
                             <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', fontWeight: 'bold' }}>{formatRupiah(summary.totalHpp)}</td>
                             <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', fontWeight: 'bold' }}>{formatRupiah(pkg.hargaJual)}</td>
-                            <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', color: summary.hppPersen > 0.6 ? '#f87171' : '#34d399' }}>{formatPercent(summary.hppPersen)}</td>
-                            <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', fontWeight: 'bold', color: '#60a5fa' }}>{formatRupiah(summary.margin)}</td>
-                            <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', color: summary.marginPersen < 0.4 ? '#f87171' : '#34d399' }}>{formatPercent(summary.marginPersen)}</td>
+                            <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', color: summary.hppPersen > 0.6 ? 'var(--text-danger)' : 'var(--text-success)' }}>{formatPercent(summary.hppPersen)}</td>
+                            <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', fontWeight: 'bold', color: 'var(--text-primary)' }}>{formatRupiah(summary.margin)}</td>
+                            <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', color: summary.marginPersen < 0.4 ? 'var(--text-danger)' : 'var(--text-success)' }}>{formatPercent(summary.marginPersen)}</td>
                             {pkg.items.length > 0 ? (
                               <td style={{ textAlign: 'center' }}>
-                                <button className="btn" onClick={() => handleDeleteItem(pkg.items[0].id)} style={{ padding: '0.3rem', color: '#ef4444', background: 'transparent' }}><X size={14} /></button>
+                                <button className="btn" onClick={() => handleDeleteItem(pkg.items[0].id)} style={{ padding: '0.3rem', color: 'var(--text-danger)', background: 'transparent' }}><X size={14} /></button>
                               </td>
                             ) : <td></td>}
                           </tr>
@@ -472,7 +472,7 @@ const HppProduk = ({ category }) => {
                                 <td style={{ textAlign: 'right' }}>{formatRupiah(cost)}</td>
                                 <td style={{ textAlign: 'right', color: 'var(--text-muted)' }}>{formatPercent(persen)}</td>
                                 <td style={{ textAlign: 'center' }}>
-                                  <button className="btn" onClick={() => handleDeleteItem(item.id)} style={{ padding: '0.3rem', color: '#ef4444', background: 'transparent' }}><X size={14} /></button>
+                                  <button className="btn" onClick={() => handleDeleteItem(item.id)} style={{ padding: '0.3rem', color: 'var(--text-danger)', background: 'transparent' }}><X size={14} /></button>
                                 </td>
                               </tr>
                             );
@@ -506,7 +506,7 @@ const HppProduk = ({ category }) => {
         </div>
 
         <div style={{ background: 'var(--surface-dark)', padding: '1.5rem', borderRadius: '0.5rem', border: '1px dashed var(--border-glass)' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '1.25rem', color: '#60a5fa' }}>Buat Paket / Produk Baru</h3>
+          <h3 style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Buat Paket / Produk Baru</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ fontSize: '0.85rem' }}>Nama Paket</label>

@@ -129,7 +129,7 @@ const JobLaki = () => {
           onClick={() => setSelectedDate(dateStr)}
           style={{ 
             background: isSelected ? 'var(--overlay-light)' : 'var(--surface-dark)', 
-            border: `1px solid ${isSelected ? '#60a5fa' : 'var(--border-glass)'}`, 
+            border: `1px solid ${isSelected ? 'var(--text-primary)' : 'var(--border-glass)'}`, 
             minHeight: '120px', 
             padding: '0.5rem',
             cursor: 'pointer',
@@ -174,7 +174,7 @@ const JobLaki = () => {
                 padding: '0.2rem 0.4rem', 
                 borderRadius: '0.25rem', 
                 background: job.category === 'Wedding' ? 'var(--accent-wedding-bg)' : 'var(--success-bg)',
-                color: job.category === 'Wedding' ? '#f472b6' : '#34d399',
+                color: job.category === 'Wedding' ? '#f472b6' : 'var(--text-success)',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis'
@@ -275,7 +275,7 @@ const JobLaki = () => {
                     {selectedJobs.filter(j => j.category === 'Wedding').map(job => (
                       <div key={job.id} style={{ background: 'var(--input-bg)', borderLeft: '3px solid #ec4899', borderRadius: '0.3rem', padding: '1rem' }}>
                         <h3 style={{ fontSize: '1.05rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>{job.clientName || 'Tanpa Nama'}</h3>
-                        <div style={{ color: '#60a5fa', fontSize: '0.85rem', marginBottom: '0.75rem', fontWeight: '500' }}>{job.productName}</div>
+                        <div style={{ color: 'var(--text-primary)', fontSize: '0.85rem', marginBottom: '0.75rem', fontWeight: '500' }}>{job.productName}</div>
                         
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                           {job.phone && <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Phone size={12} /> {job.phone}</div>}
@@ -291,14 +291,14 @@ const JobLaki = () => {
               {/* STUDIO SECTION */}
               {selectedJobs.filter(j => j.category === 'Studio').length > 0 && (
                 <div>
-                  <h3 style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#34d399', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--success-border)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
+                  <h3 style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-success)', textTransform: 'uppercase', letterSpacing: '1px', borderBottom: '1px solid var(--success-border)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>
                     Studio ({selectedJobs.filter(j => j.category === 'Studio').length})
                   </h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     {selectedJobs.filter(j => j.category === 'Studio').map(job => (
                       <div key={job.id} style={{ background: 'var(--input-bg)', borderLeft: '3px solid #10b981', borderRadius: '0.3rem', padding: '1rem' }}>
                         <h3 style={{ fontSize: '1.05rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>{job.clientName || 'Tanpa Nama'}</h3>
-                        <div style={{ color: '#60a5fa', fontSize: '0.85rem', marginBottom: '0.75rem', fontWeight: '500' }}>{job.productName}</div>
+                        <div style={{ color: 'var(--text-primary)', fontSize: '0.85rem', marginBottom: '0.75rem', fontWeight: '500' }}>{job.productName}</div>
                         
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                           {job.phone && <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Phone size={12} /> {job.phone}</div>}

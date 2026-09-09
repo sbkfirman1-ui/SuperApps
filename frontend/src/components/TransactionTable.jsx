@@ -140,7 +140,7 @@ const TransactionTable = ({ category, data, onResetAll, onUpdateRow, onDeleteRow
               <button className="btn btn-primary" onClick={exportToCSV} style={{ padding: '0.5rem 1rem' }}>
                 <Download size={16} /> Export
               </button>
-              <button className="btn btn-danger" onClick={handleResetAllData} style={{ padding: '0.5rem 1rem', background: '#ef4444', color: 'white' }}>
+              <button className="btn btn-danger" onClick={handleResetAllData} style={{ padding: '0.5rem 1rem', background: 'var(--text-danger)', color: 'white' }}>
                 <Trash2 size={16} /> Reset Data
               </button>
             </div>
@@ -218,7 +218,7 @@ const TransactionTable = ({ category, data, onResetAll, onUpdateRow, onDeleteRow
                                 onUpdateRow(row.id, { dp: Number(editForm.dp), productPrice: Number(editForm.harga), catatan: editForm.catatan });
                                 setEditRowId(null);
                               }
-                            }} style={{ padding: '0.3rem', color: '#34d399', background: 'transparent' }}><Check size={16} /></button>
+                            }} style={{ padding: '0.3rem', color: 'var(--text-success)', background: 'transparent' }}><Check size={16} /></button>
                             <button className="btn" onClick={() => setEditRowId(null)} style={{ padding: '0.3rem', color: 'var(--text-muted)', background: 'transparent' }}><X size={16} /></button>
                           </div>
                         </td>
@@ -242,14 +242,14 @@ const TransactionTable = ({ category, data, onResetAll, onUpdateRow, onDeleteRow
                             <button className="btn" onClick={() => {
                               setEditRowId(row.id);
                               setEditForm({ dp: row.dp, harga: row.harga, catatan: row.catatan || '' });
-                            }} style={{ padding: '0.3rem', color: '#60a5fa', background: 'transparent' }} title="Edit Data">
+                            }} style={{ padding: '0.3rem', color: 'var(--text-primary)', background: 'transparent' }} title="Edit Data">
                               <Edit2 size={16} />
                             </button>
                             <button className="btn" onClick={async () => {
                               if (await confirmDelete('Yakin ingin menghapus transaksi ini?')) {
                                 if (onDeleteRow) onDeleteRow(row.id);
                               }
-                            }} style={{ padding: '0.3rem', color: '#ef4444', background: 'transparent' }} title="Hapus Data">
+                            }} style={{ padding: '0.3rem', color: 'var(--text-danger)', background: 'transparent' }} title="Hapus Data">
                               <Trash2 size={16} />
                             </button>
                           </div>
