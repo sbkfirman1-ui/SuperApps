@@ -440,3 +440,8 @@ input[type="number"] {
     width: 100%;
   }
 }
+
+/* SweetAlert2 Custom Styling */
+.swal2-actions {
+  gap: 1rem;
+}
