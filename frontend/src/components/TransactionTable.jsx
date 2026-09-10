@@ -64,8 +64,10 @@ const TransactionTable = ({ category, data, onResetAll, onUpdateRow, onDeleteRow
   };
 
   const sortedData = [...filteredData].sort((a, b) => {
-    if (sortOrder === 'az') return (a.client || '').localeCompare(b.client || '');
-    if (sortOrder === 'za') return (b.client || '').localeCompare(a.client || '');
+    const clientA = String(a.client || '');
+    const clientB = String(b.client || '');
+    if (sortOrder === 'az') return clientA.localeCompare(clientB);
+    if (sortOrder === 'za') return clientB.localeCompare(clientA);
     return 0; // 'newest' relies on the original array order passed from parent
   });
 
@@ -201,7 +203,7 @@ const TransactionTable = ({ category, data, onResetAll, onUpdateRow, onDeleteRow
                     <td style={{ fontWeight: 500, color: 'var(--text-main)' }}>
                       {editRowId === row.id ? (
                         <input type="text" className="form-control" style={{ width: '130px', padding: '0.3rem' }} 
-                          value={editForm.client} 
+                          value={editForm.client || ''} 
                           onChange={e => setEditForm({...editForm, client: e.target.value})} 
                         />
                       ) : (
