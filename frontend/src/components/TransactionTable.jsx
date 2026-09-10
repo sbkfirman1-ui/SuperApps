@@ -65,10 +65,12 @@ const TransactionTable = ({ category, data, onResetAll, onUpdateRow, onDeleteRow
   };
 
   const sortedData = [...filteredData].sort((a, b) => {
-    const clientA = String(a.client || '');
-    const clientB = String(b.client || '');
-    if (sortOrder === 'az') return clientA.localeCompare(clientB);
-    if (sortOrder === 'za') return clientB.localeCompare(clientA);
+    if (sortOrder === 'az') {
+      return new Date(a.tglHariH || 0) - new Date(b.tglHariH || 0);
+    }
+    if (sortOrder === 'za') {
+      return new Date(b.tglHariH || 0) - new Date(a.tglHariH || 0);
+    }
     return 0; // 'newest' relies on the original array order passed from parent
   });
 
@@ -142,8 +144,8 @@ const TransactionTable = ({ category, data, onResetAll, onUpdateRow, onDeleteRow
                 <label className="form-label" style={{ fontSize: '0.85rem' }}>Urutkan</label>
                 <select className="form-control" style={{ padding: '0.5rem', width: '130px' }} value={sortOrder} onChange={handleSortChange}>
                   <option value="newest">Terbaru</option>
-                  <option value="az">Nama (A-Z)</option>
-                  <option value="za">Nama (Z-A)</option>
+                  <option value="az">Tgl Hari H (A-Z)</option>
+                  <option value="za">Tgl Hari H (Z-A)</option>
                 </select>
               </div>
               
