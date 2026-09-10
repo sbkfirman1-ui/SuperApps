@@ -69,6 +69,7 @@ const Dashboard = ({ category }) => {
       const lunasArr = [], dpArr = [], blmArr = [];
       
       const prodCounts = {}, prodRevenues = {};
+      const monthlyTxData = {};
 
       transactions.forEach(tx => {
         const price = Number(tx.productPrice) || 0;
@@ -94,6 +95,21 @@ const Dashboard = ({ category }) => {
           prodCounts[tx.productName] = (prodCounts[tx.productName] || 0) + 1;
           prodRevenues[tx.productName] = (prodRevenues[tx.productName] || 0) + price;
         }
+
+        const dateString = tx.dDayDate || tx.tglBooking || tx.created_at;
+        if (dateString) {
+          const date = new Date(dateString);
+          if (!isNaN(date)) {
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const key = `${yyyy}-${mm}`;
+            if (!monthlyTxData[key]) {
+              monthlyTxData[key] = { pendapatan: 0, jumlahJob: 0 };
+            }
+            monthlyTxData[key].pendapatan += price;
+            monthlyTxData[key].jumlahJob += 1;
+          }
+        }
       });
 
       const totalTopTx = Object.values(prodCounts).reduce((a, b) => a + b, 0);
@@ -111,6 +127,17 @@ const Dashboard = ({ category }) => {
           name, revenue,
           percentage: tPend > 0 ? ((revenue / tPend) * 100).toFixed(1) : 0
         }));
+
+      const sortedTxMonths = Object.keys(monthlyTxData).sort();
+      const chartTxData = sortedTxMonths.map(key => {
+        const data = monthlyTxData[key];
+        const [y, m] = key.split('-');
+        const label = `${MONTHS[parseInt(m) - 1]} ${y}`;
+        return { name: label, pendapatan: data.pendapatan, jumlahJob: data.jumlahJob };
+      });
+      if (chartTxData.length === 0) {
+        chartTxData.push({ name: 'Belum ada data', pendapatan: 0, jumlahJob: 0 });
+      }
 
       // Calculate Finance Stats
       let totalPemasukan = 0;
@@ -206,6 +233,7 @@ const Dashboard = ({ category }) => {
         belumLunasCount: blm, belumLunasValue: blmVal, belumLunasTx: blmArr,
         topProducts: tProd.length ? tProd : [{ name: 'Belum ada data', value: 1 }],
         topRevenueProducts: tRev,
+        dataTransaksiKurva: chartTxData,
         dataSales: chartData,
         cashFlowSaldo,
         totalTransfer,
@@ -235,7 +263,7 @@ const Dashboard = ({ category }) => {
   };
 
   const COLORS = ['var(--text-primary)', 'var(--text-success)', 'var(--text-warning)', 'var(--text-danger)', '#a78bfa'];
-  const { totalPendapatan, totalTransaksi, piutangBerjalan, lunasCount, lunasValue, lunasTx, dpCount, dpValue, dpTx, belumLunasCount, belumLunasValue, belumLunasTx, topProducts, topRevenueProducts, dataSales, cashFlowSaldo, totalTransfer, totalCash, totalPemasukan, totalPengeluaran, labaBersihTotal, netMarginTotal } = stats;
+  const { totalPendapatan, totalTransaksi, piutangBerjalan, lunasCount, lunasValue, lunasTx, dpCount, dpValue, dpTx, belumLunasCount, belumLunasValue, belumLunasTx, topProducts, topRevenueProducts, dataTransaksiKurva, dataSales, cashFlowSaldo, totalTransfer, totalCash, totalPemasukan, totalPengeluaran, labaBersihTotal, netMarginTotal } = stats;
 
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '4rem' }}>
@@ -398,9 +426,39 @@ const Dashboard = ({ category }) => {
                 <XCircle className="summary-card-icon" size={32} />
               </div>
             </div>
+            
+            {/* NEW CHART: Tren Pendapatan Transaksi */}
+            <div className="chart-card glass-panel animate-stagger" style={{ marginTop: '2rem', animationDelay: '0.8s' }}>
+              <div className="chart-header"><TrendingUp size={20} className="text-primary" /> Kurva Tren Pendapatan (Berdasarkan Transaksi)</div>
+              <div style={{ width: '100%', height: 350 }}>
+                <ResponsiveContainer>
+                  <AreaChart data={dataTransaksiKurva || []} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorPendapatan" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="var(--text-primary)" stopOpacity={0.8} />
+                        <stop offset="95%" stopColor="var(--text-primary)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="name" stroke="var(--text-muted)" />
+                    <YAxis stroke="var(--text-muted)" tickFormatter={(v) => `Rp${(v / 1000000).toFixed(1)}M`} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--overlay-border)" />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', borderRadius: 'var(--radius-sm)' }}
+                      itemStyle={{ color: 'var(--text-main)' }}
+                      formatter={(value, name) => {
+                        if (name === 'pendapatan') return [formatRupiah(value), 'Total Pendapatan'];
+                        return [value, name];
+                      }}
+                    />
+                    <Legend verticalAlign="top" height={36} />
+                    <Area type="monotone" dataKey="pendapatan" name="Pendapatan Transaksi" stroke="var(--text-primary)" fillOpacity={1} fill="url(#colorPendapatan)" strokeWidth={3} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </div>
 
-          <div className="chart-card glass-panel animate-stagger" style={{ marginBottom: '2rem', animationDelay: '0.8s' }}>
+          <div className="chart-card glass-panel animate-stagger" style={{ marginBottom: '2rem', animationDelay: '0.85s' }}>
             <div className="chart-header"><TrendingUp size={20} className="text-primary" /> Arus Kas (Pemasukan vs Pengeluaran)</div>
             <div style={{ width: '100%', height: 350 }}>
               <ResponsiveContainer>
