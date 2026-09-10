@@ -9,8 +9,9 @@ const formatRupiah = (number) => {
 
 const TransactionTable = ({ category, data, onResetAll, onUpdateRow, onDeleteRow }) => {
   const [tempStartDate, setTempStartDate] = useState('');
-  const [tempEndDate, setTempEndDate] = useState('');
   const [tempProduct, setTempProduct] = useState('');
+  
+  const [sortOrder, setSortOrder] = useState(() => localStorage.getItem(`tx_sort_${category}`) || 'newest');
 
   const [activeStartDate, setActiveStartDate] = useState('');
   const [activeEndDate, setActiveEndDate] = useState('');
@@ -56,11 +57,23 @@ const TransactionTable = ({ category, data, onResetAll, onUpdateRow, onDeleteRow
     return matches;
   });
 
+  const handleSortChange = (e) => {
+    const val = e.target.value;
+    setSortOrder(val);
+    localStorage.setItem(`tx_sort_${category}`, val);
+  };
+
+  const sortedData = [...filteredData].sort((a, b) => {
+    if (sortOrder === 'az') return (a.client || '').localeCompare(b.client || '');
+    if (sortOrder === 'za') return (b.client || '').localeCompare(a.client || '');
+    return 0; // 'newest' relies on the original array order passed from parent
+  });
+
   const exportToCSV = () => {
     const headers = ["No", "Nama Client", "Tanggal Booking", "Tanggal Hari H", "Vendor", "Produk", "Kategori", "Down Payment", "Harga Produk", "Selisih", "Catatan", "Status"];
     const csvRows = [headers.join(',')];
     
-    filteredData.forEach((row, index) => {
+    sortedData.forEach((row, index) => {
       const selisih = row.harga - row.dp;
       const values = [
         index + 1,
@@ -122,6 +135,15 @@ const TransactionTable = ({ category, data, onResetAll, onUpdateRow, onDeleteRow
                 </select>
               </div>
               
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.85rem' }}>Urutkan</label>
+                <select className="form-control" style={{ padding: '0.5rem', width: '130px' }} value={sortOrder} onChange={handleSortChange}>
+                  <option value="newest">Terbaru</option>
+                  <option value="az">Nama (A-Z)</option>
+                  <option value="za">Nama (Z-A)</option>
+                </select>
+              </div>
+              
               <div style={{ display: 'flex', gap: '0.5rem', paddingBottom: '0.2rem' }}>
                 <button className="btn btn-primary" onClick={handleApplyFilter} style={{ padding: '0.5rem 1rem' }}>
                   Terapkan
@@ -135,7 +157,7 @@ const TransactionTable = ({ category, data, onResetAll, onUpdateRow, onDeleteRow
             {/* RIGHT SIDE: ACTIONS */}
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', paddingBottom: '0.2rem' }}>
               <span style={{ fontWeight: 600, color: 'var(--text-muted)', fontSize: '0.9rem', marginRight: '0.5rem' }}>
-                Total: {filteredData.length} Data
+                Total: {sortedData.length} Data
               </span>
               <button className="btn btn-primary" onClick={exportToCSV} style={{ padding: '0.5rem 1rem' }}>
                 <Download size={16} /> Export
@@ -169,14 +191,23 @@ const TransactionTable = ({ category, data, onResetAll, onUpdateRow, onDeleteRow
               </tr>
             </thead>
             <tbody>
-              {filteredData.map((row, index) => {
+              {sortedData.map((row, index) => {
                 const selisih = row.harga - row.dp;
                 const statusColor = row.status === 'LUNAS' ? 'bg-success' : (row.status === 'DP' ? 'bg-warning' : 'bg-danger');
 
                 return (
                   <tr key={row.id}>
                     <td>{index + 1}</td>
-                    <td style={{ fontWeight: 500, color: 'var(--text-main)' }}>{row.client}</td>
+                    <td style={{ fontWeight: 500, color: 'var(--text-main)' }}>
+                      {editRowId === row.id ? (
+                        <input type="text" className="form-control" style={{ width: '130px', padding: '0.3rem' }} 
+                          value={editForm.client} 
+                          onChange={e => setEditForm({...editForm, client: e.target.value})} 
+                        />
+                      ) : (
+                        row.client
+                      )}
+                    </td>
                     <td>{row.tglBooking}</td>
                     <td>{row.tglHariH}</td>
                     <td>{row.vendor}</td>
@@ -215,7 +246,7 @@ const TransactionTable = ({ category, data, onResetAll, onUpdateRow, onDeleteRow
                           <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
                             <button className="btn" onClick={() => {
                               if (onUpdateRow) {
-                                onUpdateRow(row.id, { dp: Number(editForm.dp), productPrice: Number(editForm.harga), catatan: editForm.catatan });
+                                onUpdateRow(row.id, { clientName: editForm.client, dp: Number(editForm.dp), productPrice: Number(editForm.harga), catatan: editForm.catatan });
                                 setEditRowId(null);
                               }
                             }} style={{ padding: '0.3rem', color: 'var(--text-success)', background: 'transparent' }}><Check size={16} /></button>
@@ -241,7 +272,7 @@ const TransactionTable = ({ category, data, onResetAll, onUpdateRow, onDeleteRow
                           <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
                             <button className="btn" onClick={() => {
                               setEditRowId(row.id);
-                              setEditForm({ dp: row.dp, harga: row.harga, catatan: row.catatan || '' });
+                              setEditForm({ client: row.client, dp: row.dp, harga: row.harga, catatan: row.catatan || '' });
                             }} style={{ padding: '0.3rem', color: 'var(--text-primary)', background: 'transparent' }} title="Edit Data">
                               <Edit2 size={16} />
                             </button>

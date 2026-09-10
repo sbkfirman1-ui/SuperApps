@@ -42,6 +42,7 @@ const Studio = () => {
   const handleUpdateRow = async (id, updates) => {
     // Save DP, Harga, and Catatan to Supabase
     await supabase.from('transactions').update({
+      clientName: updates.clientName,
       dp: updates.dp,
       productPrice: updates.productPrice,
       catatan: updates.catatan
