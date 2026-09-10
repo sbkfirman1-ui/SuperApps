@@ -9,6 +9,7 @@ const formatRupiah = (number) => {
 
 const TransactionTable = ({ category, data, onResetAll, onUpdateRow, onDeleteRow }) => {
   const [tempStartDate, setTempStartDate] = useState('');
+  const [tempEndDate, setTempEndDate] = useState('');
   const [tempProduct, setTempProduct] = useState('');
   
   const [sortOrder, setSortOrder] = useState(() => localStorage.getItem(`tx_sort_${category}`) || 'newest');
