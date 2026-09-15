@@ -9,7 +9,12 @@ import {
 } from '../utils/masterData';
 
 const Setting = () => {
-  const [financeCategories, setFinanceCategories] = useState(() => getMasterData('financeCategories', DEFAULT_FINANCE_CATEGORIES));
+  const [financeCategories, setFinanceCategories] = useState(() => {
+    return getMasterData('financeCategories', DEFAULT_FINANCE_CATEGORIES).map(cat => ({
+      ...cat,
+      group: cat.group || (cat.type === 'Pemasukan' ? 'Pendapatan' : 'Beban Operasional')
+    }));
+  });
   useEffect(() => { setMasterData('financeCategories', financeCategories); }, [financeCategories]);
 
   // Theme state

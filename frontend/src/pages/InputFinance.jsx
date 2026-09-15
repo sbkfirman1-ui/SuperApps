@@ -104,7 +104,10 @@ const InputFinance = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
   
-  const financeCategories = getMasterData('financeCategories', DEFAULT_FINANCE_CATEGORIES);
+  const financeCategories = getMasterData('financeCategories', DEFAULT_FINANCE_CATEGORIES).map(cat => ({
+    ...cat,
+    group: cat.group || (cat.type === 'Pemasukan' ? 'Pendapatan' : 'Beban Operasional')
+  }));
 
   const [formData, setFormData] = useState({
     kategori_layanan: 'Wedding',

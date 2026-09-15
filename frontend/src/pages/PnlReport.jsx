@@ -20,7 +20,10 @@ const PnlReport = ({ category }) => {
   const [loading, setLoading] = useState(false);
   const [year, setYear] = useState(new Date().getFullYear());
 
-  const financeCategories = getMasterData('financeCategories', DEFAULT_FINANCE_CATEGORIES);
+  const financeCategories = getMasterData('financeCategories', DEFAULT_FINANCE_CATEGORIES).map(cat => ({
+    ...cat,
+    group: cat.group || (cat.type === 'Pemasukan' ? 'Pendapatan' : 'Beban Operasional')
+  }));
 
   useEffect(() => {
     const fetchData = async () => {
@@ -69,15 +72,12 @@ const PnlReport = ({ category }) => {
   const renderGroup = (groupName) => {
     let groupCats = financeCategories.filter(cat => cat.group === groupName);
 
-    // Khusus untuk Pendapatan, filter berdasarkan awalan nama (Wedding/Studio)
+    // Khusus untuk Pendapatan, sembunyikan yang secara eksplisit milik divisi lain
     if (groupName === 'Pendapatan') {
       groupCats = groupCats.filter(cat => {
         const lowerName = cat.name.toLowerCase();
-        if (category === 'Wedding') {
-          return lowerName.startsWith('wedding');
-        } else if (category === 'Studio') {
-          return lowerName.startsWith('studio');
-        }
+        if (category === 'Wedding' && lowerName.includes('studio')) return false;
+        if (category === 'Studio' && lowerName.includes('wedding')) return false;
         return true;
       });
     }
@@ -127,8 +127,8 @@ const PnlReport = ({ category }) => {
     // Check if this category should be included based on PNL type
     let includePendapatan = true;
     if (cat.group === 'Pendapatan') {
-      if (category === 'Wedding' && !lowerName.startsWith('wedding')) includePendapatan = false;
-      if (category === 'Studio' && !lowerName.startsWith('studio')) includePendapatan = false;
+      if (category === 'Wedding' && lowerName.includes('studio')) includePendapatan = false;
+      if (category === 'Studio' && lowerName.includes('wedding')) includePendapatan = false;
     }
 
     for (let i = 0; i < 12; i++) {
