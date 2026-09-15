@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Loader from '../components/Loader';
-import { Plus, Trash2, Edit2, Save, X, Check } from 'lucide-react';
+import { Plus, Trash2, Edit2, Save, X, Check, ChevronDown } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { 
   DEFAULT_FINANCE_CATEGORIES, 
@@ -73,63 +73,121 @@ const Setting = () => {
     );
   };
 
+  const [expandedGroups, setExpandedGroups] = useState({});
+  const toggleGroup = (group) => {
+    setExpandedGroups(prev => ({ ...prev, [group]: !prev[group] }));
+  };
+
+  const getGroupName = (name) => {
+    if (!name) return 'Lainnya';
+    const lowerName = name.toLowerCase();
+    if (lowerName.startsWith('intimate wedding')) return 'Intimate Wedding';
+    if (lowerName.startsWith('prewedding') || lowerName.startsWith('prewed')) return 'Prewedding';
+    if (lowerName.startsWith('wedding')) return 'Wedding';
+    if (lowerName.startsWith('engagement') || lowerName.startsWith('lamaran')) return 'Engagement / Lamaran';
+    if (lowerName.startsWith('siraman')) return 'Siraman';
+    if (lowerName.startsWith('akad')) return 'Akad';
+    if (lowerName.startsWith('resepsi')) return 'Resepsi';
+    
+    const firstWord = name.trim().split(' ')[0];
+    return firstWord ? firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase() : 'Lainnya';
+  };
+
   const weddingPackages = packages.filter(p => p.category === 'Wedding');
   const studioPackages = packages.filter(p => p.category === 'Studio');
 
-  const renderPriceBookTable = (title, data) => (
-    <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
-      <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem', color: 'var(--text-main)' }}>{title}</h2>
-      <div className="table-container">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Nama Paket</th>
-              <th style={{ textAlign: 'right' }}>Harga Jual</th>
-              <th style={{ textAlign: 'center', width: '120px' }}>Status</th>
-              <th style={{ textAlign: 'center', width: '120px' }}>Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loadingPackages ? (
-              <tr><td colSpan="4" style={{ padding: 0 }}><Loader text="Memuat data..." /></td></tr>
-            ) : data.length === 0 ? (
-              <tr><td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Belum ada paket</td></tr>
-            ) : data.map(pkg => {
-              const isHidden = hiddenPackages.includes(pkg.id);
-              return (
-                <tr key={pkg.id} style={{ opacity: isHidden ? 0.6 : 1 }}>
-                  <td style={{ fontWeight: 500, color: isHidden ? 'var(--text-muted)' : 'var(--text-primary)' }}>{pkg.name}</td>
-                  <td style={{ textAlign: 'right', fontWeight: 'bold' }}>Rp.{Number(pkg.hargaJual).toLocaleString('id-ID')}</td>
-                  <td style={{ textAlign: 'center' }}>
-                    <span className={`badge ${isHidden ? 'bg-danger' : 'bg-success'}`}>
-                      {isHidden ? 'Disembunyikan' : 'Aktif'}
-                    </span>
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <button 
-                      className="btn" 
-                      onClick={() => toggleHidePackage(pkg.id)}
-                      style={{ 
-                        padding: '0.4rem 0.8rem', 
-                        fontSize: '0.85rem',
-                        background: isHidden ? 'rgba(52, 211, 153, 0.15)' : 'var(--danger-bg)',
-                        color: isHidden ? 'var(--text-success)' : 'var(--text-danger)'
-                      }}
+  const renderPriceBookTable = (title, data) => {
+    const groupedData = data.reduce((acc, pkg) => {
+      const group = getGroupName(pkg.name);
+      if (!acc[group]) acc[group] = [];
+      acc[group].push(pkg);
+      return acc;
+    }, {});
+
+    return (
+      <div className="glass-panel" style={{ padding: '2rem', marginBottom: '2rem' }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1.5rem', color: 'var(--text-main)' }}>{title}</h2>
+        <div className="table-container">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Nama Paket</th>
+                <th style={{ textAlign: 'right' }}>Harga Jual</th>
+                <th style={{ textAlign: 'center', width: '120px' }}>Status</th>
+                <th style={{ textAlign: 'center', width: '120px' }}>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loadingPackages ? (
+                <tr><td colSpan="4" style={{ padding: 0 }}><Loader text="Memuat data..." /></td></tr>
+              ) : data.length === 0 ? (
+                <tr><td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Belum ada paket</td></tr>
+              ) : Object.entries(groupedData).map(([groupName, pkgs]) => {
+                const isExpanded = expandedGroups[`${title}-${groupName}`];
+                
+                return (
+                  <React.Fragment key={groupName}>
+                    {/* Accordion Header */}
+                    <tr 
+                      onClick={() => toggleGroup(`${title}-${groupName}`)} 
+                      style={{ cursor: 'pointer', background: 'var(--surface-dark)', borderTop: '2px solid var(--border-glass)', transition: 'background 0.2s' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--overlay-bg-hover)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'var(--surface-dark)'}
                     >
-                      {isHidden ? 'Tampilkan' : 'Sembunyikan'}
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                      <td colSpan="4" style={{ padding: '1rem', fontWeight: 'bold', color: 'var(--primary)', fontSize: '1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: '4px', background: 'rgba(56, 189, 248, 0.1)', color: 'var(--primary)', transition: 'transform 0.2s' }}>
+                            {isExpanded ? <ChevronDown size={16} /> : <Plus size={16} />}
+                          </span>
+                          <span>{groupName}</span>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 'normal', color: 'var(--text-muted)', background: 'var(--overlay-bg)', padding: '0.2rem 0.6rem', borderRadius: '12px' }}>
+                            {pkgs.length} Paket
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                    
+                    {/* Accordion Body */}
+                    {isExpanded && pkgs.map(pkg => {
+                      const isHidden = hiddenPackages.includes(pkg.id);
+                      return (
+                        <tr key={pkg.id} style={{ opacity: isHidden ? 0.6 : 1, borderTop: '1px solid var(--border-glass)' }}>
+                          <td style={{ fontWeight: 500, color: isHidden ? 'var(--text-muted)' : 'var(--text-primary)', paddingLeft: '2.5rem' }}>{pkg.name}</td>
+                          <td style={{ textAlign: 'right', fontWeight: 'bold' }}>Rp.{Number(pkg.hargaJual).toLocaleString('id-ID')}</td>
+                          <td style={{ textAlign: 'center' }}>
+                            <span className={`badge ${isHidden ? 'bg-danger' : 'bg-success'}`}>
+                              {isHidden ? 'Disembunyikan' : 'Aktif'}
+                            </span>
+                          </td>
+                          <td style={{ textAlign: 'center' }}>
+                            <button 
+                              className="btn" 
+                              onClick={() => toggleHidePackage(pkg.id)}
+                              style={{ 
+                                padding: '0.4rem 0.8rem', 
+                                fontSize: '0.85rem',
+                                background: isHidden ? 'rgba(52, 211, 153, 0.15)' : 'var(--danger-bg)',
+                                color: isHidden ? 'var(--text-success)' : 'var(--text-danger)'
+                              }}
+                            >
+                              {isHidden ? 'Tampilkan' : 'Sembunyikan'}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '1rem' }}>
+          * Paket yang disembunyikan tidak akan muncul sebagai pilihan di halaman Input Transaksi.
+        </p>
       </div>
-      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '1rem' }}>
-        * Paket yang disembunyikan tidak akan muncul sebagai pilihan di halaman Input Transaksi.
-      </p>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="animate-fade-in" style={{ width: '100%', maxWidth: '900px', margin: '0 auto', paddingBottom: '4rem' }}>
