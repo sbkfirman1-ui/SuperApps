@@ -119,17 +119,38 @@ const InputFinance = () => {
     nominal: ''
   });
 
+  const getValidCategories = (layanan, arusKas) => {
+    return financeCategories.filter(c => {
+      if (c.type !== arusKas) return false;
+      const lowerName = c.name.toLowerCase();
+      // Filter based on service type
+      if (layanan === 'Wedding' && lowerName.startsWith('job studio')) return false;
+      if (layanan === 'Studio' && lowerName.startsWith('job wedding')) return false;
+      return true;
+    }).sort((a, b) => a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1);
+  };
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === 'kategori_layanan') {
+      const validCats = getValidCategories(value, formData.arus_kas);
+      setFormData({ 
+        ...formData, 
+        kategori_layanan: value,
+        kategori_transaksi: validCats.length > 0 ? validCats[0].name : ''
+      });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleJenisChange = (e) => {
     const newJenis = e.target.value;
-    const filteredCats = financeCategories.filter(c => c.type === newJenis);
+    const validCats = getValidCategories(formData.kategori_layanan, newJenis);
     setFormData({
       ...formData,
       arus_kas: newJenis,
-      kategori_transaksi: filteredCats.length > 0 ? filteredCats[0].name : ''
+      kategori_transaksi: validCats.length > 0 ? validCats[0].name : ''
     });
   };
 
@@ -163,14 +184,14 @@ const InputFinance = () => {
     } else {
       setMessage({ type: 'success', text: 'Data Finance Berhasil Disimpan!' });
       
-      // Reset form but keep selected jenis
-      const filteredCats = financeCategories.filter(c => c.type === formData.arus_kas);
+      // Reset form but keep selected jenis and layanan
+      const validCats = getValidCategories(formData.kategori_layanan, formData.arus_kas);
       setFormData({
         kategori_layanan: formData.kategori_layanan,
         tanggal: '',
         keterangan: '',
         metode_pembayaran: 'Transfer',
-        kategori_transaksi: filteredCats.length > 0 ? filteredCats[0].name : '',
+        kategori_transaksi: validCats.length > 0 ? validCats[0].name : '',
         arus_kas: formData.arus_kas,
         nominal: ''
       });
@@ -178,9 +199,7 @@ const InputFinance = () => {
   };
 
   const isPemasukan = formData.arus_kas === 'Pemasukan';
-  const filteredCategories = financeCategories
-    .filter(c => c.type === formData.arus_kas)
-    .sort((a, b) => a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1);
+  const filteredCategories = getValidCategories(formData.kategori_layanan, formData.arus_kas);
 
   const categoryOptions = filteredCategories.map(cat => ({
     value: cat.name,
