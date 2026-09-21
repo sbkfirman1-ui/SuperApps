@@ -62,6 +62,23 @@ const FinanceData = ({ category }) => {
     fetchData();
   };
 
+  const handleEditRow = async (id, updatedData) => {
+    const { error } = await supabase.from('finance').update({
+      tanggal: updatedData.tanggal,
+      keterangan: `[${updatedData.jenisPembayaran}] ${updatedData.keterangan}`,
+      jenis: updatedData.kategori,
+      kategoriFinance: updatedData.kategoriTransaksi,
+      nominal: Number(updatedData.nominal)
+    }).eq('id', id);
+
+    if (!error) {
+      fetchData();
+    } else {
+      console.error("Error updating row:", error);
+      alert("Gagal menyimpan perubahan");
+    }
+  };
+
   if (loading) {
     return (
       <div className="page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
@@ -79,6 +96,7 @@ const FinanceData = ({ category }) => {
         data={data}
         onResetAll={handleResetAll}
         onDeleteRow={handleDeleteRow}
+        onEditRow={handleEditRow}
       />
     </div>
   );

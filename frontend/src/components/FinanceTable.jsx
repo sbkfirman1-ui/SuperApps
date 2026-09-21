@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { Download, Trash2 } from 'lucide-react';
+import { Download, Trash2, Edit2, Check, X } from 'lucide-react';
 import { confirmDelete } from '../utils/swal';
+import { getMasterData, DEFAULT_FINANCE_CATEGORIES } from '../utils/masterData';
 
 const formatRupiah = (number) => {
   if (isNaN(number) || number === null || number === '') return 'Rp.0';
   return 'Rp.' + Number(number).toLocaleString('id-ID');
 };
 
-const FinanceTable = ({ category, data, onResetAll, onDeleteRow }) => {
+const FinanceTable = ({ category, data, onResetAll, onDeleteRow, onEditRow }) => {
   const [tempStartDate, setTempStartDate] = useState('');
   const [tempEndDate, setTempEndDate] = useState('');
   const [tempPayment, setTempPayment] = useState('');
@@ -15,6 +16,41 @@ const FinanceTable = ({ category, data, onResetAll, onDeleteRow }) => {
   const [activeStartDate, setActiveStartDate] = useState('');
   const [activeEndDate, setActiveEndDate] = useState('');
   const [activePayment, setActivePayment] = useState('');
+
+  const financeCategories = getMasterData('financeCategories', DEFAULT_FINANCE_CATEGORIES);
+
+  const [editId, setEditId] = useState(null);
+  const [editForm, setEditForm] = useState({
+    tanggal: '',
+    keterangan: '',
+    kategori: 'Pemasukan',
+    kategoriTransaksi: '',
+    jenisPembayaran: 'Transfer',
+    nominal: 0
+  });
+
+  const handleStartEdit = (row) => {
+    setEditId(row.id);
+    setEditForm({
+      tanggal: row.tanggal,
+      keterangan: row.keterangan,
+      kategori: row.kategori,
+      kategoriTransaksi: row.kategoriTransaksi,
+      jenisPembayaran: row.jenisPembayaran,
+      nominal: row.kategori === 'Pemasukan' ? row.pemasukan : row.pengeluaran
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (onEditRow) {
+      await onEditRow(editId, editForm);
+    }
+    setEditId(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditId(null);
+  };
 
   const handleApplyFilter = () => {
     setActiveStartDate(tempStartDate);
@@ -156,34 +192,95 @@ const FinanceTable = ({ category, data, onResetAll, onDeleteRow }) => {
               {filteredData.map((row, index) => {
                 return (
                   <tr key={index}>
-                    <td>{row.tanggal}</td>
-                    <td>{row.keterangan}</td>
                     <td>
-                      <span style={{ 
-                        color: row.kategori === 'Pemasukan' ? 'var(--text-success)' : 'var(--text-danger)',
-                        fontWeight: 'bold',
-                        padding: '0.25rem 0.5rem',
-                        background: row.kategori === 'Pemasukan' ? 'var(--success-bg)' : 'var(--danger-bg)',
-                        border: `1px solid ${row.kategori === 'Pemasukan' ? 'var(--success-border)' : 'var(--danger-border)'}`,
-                        borderRadius: '999px',
-                        fontSize: '0.8rem'
-                      }}>
-                        {row.kategori}
-                      </span>
+                      {editId === row.id ? (
+                        <input type="date" className="form-control" style={{ padding: '0.3rem', width: '130px' }} value={editForm.tanggal} onChange={e => setEditForm({...editForm, tanggal: e.target.value})} />
+                      ) : row.tanggal}
                     </td>
-                    <td style={{ color: 'var(--text-primary)' }}>{row.kategoriTransaksi}</td>
-                    <td>{row.jenisPembayaran}</td>
-                    <td style={{ color: 'var(--text-success)' }}>{formatRupiah(row.pemasukan)}</td>
-                    <td style={{ color: 'var(--text-danger)' }}>{formatRupiah(row.pengeluaran)}</td>
+                    <td>
+                      {editId === row.id ? (
+                        <input type="text" className="form-control" style={{ padding: '0.3rem', minWidth: '150px' }} value={editForm.keterangan} onChange={e => setEditForm({...editForm, keterangan: e.target.value})} />
+                      ) : row.keterangan}
+                    </td>
+                    <td>
+                      {editId === row.id ? (
+                        <select className="form-control" style={{ padding: '0.3rem' }} value={editForm.kategori} onChange={e => setEditForm({...editForm, kategori: e.target.value})}>
+                          <option value="Pemasukan">Pemasukan</option>
+                          <option value="Pengeluaran">Pengeluaran</option>
+                        </select>
+                      ) : (
+                        <span style={{ 
+                          color: row.kategori === 'Pemasukan' ? 'var(--text-success)' : 'var(--text-danger)',
+                          fontWeight: 'bold',
+                          padding: '0.25rem 0.5rem',
+                          background: row.kategori === 'Pemasukan' ? 'var(--success-bg)' : 'var(--danger-bg)',
+                          border: `1px solid ${row.kategori === 'Pemasukan' ? 'var(--success-border)' : 'var(--danger-border)'}`,
+                          borderRadius: '999px',
+                          fontSize: '0.8rem'
+                        }}>
+                          {row.kategori}
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {editId === row.id ? (
+                        <select className="form-control" style={{ padding: '0.3rem', minWidth: '150px' }} value={editForm.kategoriTransaksi} onChange={e => setEditForm({...editForm, kategoriTransaksi: e.target.value})}>
+                          <option value="">-- Pilih --</option>
+                          {financeCategories
+                            .filter(c => c.type === editForm.kategori)
+                            .map(c => (
+                              <option key={c.id} value={c.name}>{c.name}</option>
+                            ))}
+                        </select>
+                      ) : (
+                        <span style={{ color: 'var(--text-primary)' }}>{row.kategoriTransaksi}</span>
+                      )}
+                    </td>
+                    <td>
+                      {editId === row.id ? (
+                        <select className="form-control" style={{ padding: '0.3rem' }} value={editForm.jenisPembayaran} onChange={e => setEditForm({...editForm, jenisPembayaran: e.target.value})}>
+                          <option value="Transfer">Transfer</option>
+                          <option value="Cash">Cash</option>
+                        </select>
+                      ) : row.jenisPembayaran}
+                    </td>
+                    {editId === row.id ? (
+                      editForm.kategori === 'Pemasukan' ? (
+                        <>
+                          <td><input type="number" className="form-control" style={{ padding: '0.3rem', width: '120px' }} value={editForm.nominal} onChange={e => setEditForm({...editForm, nominal: e.target.value})} /></td>
+                          <td>Rp.0</td>
+                        </>
+                      ) : (
+                        <>
+                          <td>Rp.0</td>
+                          <td><input type="number" className="form-control" style={{ padding: '0.3rem', width: '120px' }} value={editForm.nominal} onChange={e => setEditForm({...editForm, nominal: e.target.value})} /></td>
+                        </>
+                      )
+                    ) : (
+                      <>
+                        <td style={{ color: 'var(--text-success)' }}>{formatRupiah(row.pemasukan)}</td>
+                        <td style={{ color: 'var(--text-danger)' }}>{formatRupiah(row.pengeluaran)}</td>
+                      </>
+                    )}
                     <td style={{ fontWeight: 'bold' }}>{formatRupiah(row.saldo)}</td>
                     <td style={{ textAlign: 'center' }}>
-                      <button className="btn" onClick={async () => {
-                        if (await confirmDelete('Yakin ingin menghapus data ini?')) {
-                          if (onDeleteRow) onDeleteRow(row.id);
-                        }
-                      }} style={{ padding: '0.3rem', color: 'var(--text-danger)', background: 'transparent' }} title="Hapus Data">
-                        <Trash2 size={16} />
-                      </button>
+                      {editId === row.id ? (
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+                          <button className="btn" onClick={handleSaveEdit} style={{ padding: '0.3rem', color: 'var(--text-success)', background: 'transparent' }} title="Simpan"><Check size={16} /></button>
+                          <button className="btn" onClick={handleCancelEdit} style={{ padding: '0.3rem', color: 'var(--text-muted)', background: 'transparent' }} title="Batal"><X size={16} /></button>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+                          <button className="btn" onClick={() => handleStartEdit(row)} style={{ padding: '0.3rem', color: 'var(--text-primary)', background: 'transparent' }} title="Edit Data"><Edit2 size={16} /></button>
+                          <button className="btn" onClick={async () => {
+                            if (await confirmDelete('Yakin ingin menghapus data ini?')) {
+                              if (onDeleteRow) onDeleteRow(row.id);
+                            }
+                          }} style={{ padding: '0.3rem', color: 'var(--text-danger)', background: 'transparent' }} title="Hapus Data">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );
