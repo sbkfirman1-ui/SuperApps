@@ -94,20 +94,20 @@ const PnlReport = ({ category }) => {
     return (
       <React.Fragment key={groupName}>
         <tr>
-          <td colSpan={13} style={{ fontWeight: 'bold', background: 'var(--overlay-bg-hover)', paddingTop: '1.5rem', paddingBottom: '0.5rem', color: 'var(--text-main)', position: 'sticky', left: 0, zIndex: 5 }}>
+          <td colSpan={13} style={{ fontWeight: 'bold', background: 'var(--overlay-bg-hover)', paddingTop: '1.5rem', paddingBottom: '0.5rem', color: 'var(--text-main)' }}>
             {groupName}
           </td>
         </tr>
         {groupCats.map(cat => (
           <tr key={cat.name}>
-            <td style={{ paddingLeft: '1.5rem', color: 'var(--text-muted)', position: 'sticky', left: 0, background: 'var(--bg-secondary)', zIndex: 5, borderRight: '1px solid var(--border-glass)' }}>{cat.name}</td>
+            <td style={{ paddingLeft: '1.5rem', color: 'var(--text-muted)' }}>{cat.name}</td>
             {matrix[cat.name].map((val, idx) => (
               <td key={idx} style={{ textAlign: 'right' }}>{formatRupiah(val)}</td>
             ))}
           </tr>
         ))}
         <tr style={{ background: '#3b82f6', color: 'white', fontWeight: 'bold' }}>
-          <td style={{ position: 'sticky', left: 0, background: '#3b82f6', zIndex: 5 }}>Total {groupName}</td>
+          <td>Total {groupName}</td>
           {totals.map((val, idx) => (
             <td key={idx} style={{ textAlign: 'right' }}>{formatRupiah(val)}</td>
           ))}
@@ -123,7 +123,7 @@ const PnlReport = ({ category }) => {
 
   financeCategories.forEach(cat => {
     const lowerName = cat.name.toLowerCase();
-    
+
     // Check if this category should be included based on PNL type
     let includePendapatan = true;
     if (cat.group === 'Pendapatan') {
@@ -177,41 +177,41 @@ const PnlReport = ({ category }) => {
           <table className="data-table pnl-table" style={{ whiteSpace: 'nowrap', minWidth: '1200px' }}>
             <thead>
               <tr style={{ background: '#2563eb', color: 'white' }}>
-                <th style={{ width: '250px', position: 'sticky', left: 0, zIndex: 11, background: '#2563eb' }}>Akun</th>
+                <th style={{ width: '250px' }}>Akun</th>
                 {MONTHS.map(m => <th key={m} style={{ textAlign: 'right', minWidth: '110px' }}>{m}</th>)}
               </tr>
             </thead>
             <tbody>
               {renderGroup('Pendapatan')}
-              
+
               {/* Spacer */}
               <tr><td colSpan={13} style={{ height: '20px' }}></td></tr>
-              
+
               {renderGroup('Beban Operasional')}
-              
+
               {/* Spacer */}
               <tr><td colSpan={13} style={{ height: '20px' }}></td></tr>
-              
+
               {renderGroup('Beban Tetap')}
 
               {/* Spacer */}
               <tr><td colSpan={13} style={{ height: '20px' }}></td></tr>
-              
+
               {/* Final Totals */}
               <tr style={{ background: 'var(--overlay-bg-hover)', fontWeight: 'bold' }}>
-                <td style={{ color: 'var(--text-main)', position: 'sticky', left: 0, background: 'var(--bg-secondary)', zIndex: 5, borderRight: '1px solid var(--border-glass)' }}>Total Beban</td>
+                <td style={{ color: 'var(--text-main)' }}>Total Beban</td>
                 {totalBeban.map((val, idx) => (
                   <td key={idx} style={{ textAlign: 'right', color: 'var(--text-main)' }}>{formatRupiah(val)}</td>
                 ))}
               </tr>
               <tr style={{ background: '#22c55e', color: 'white', fontWeight: 'bold' }}>
-                <td style={{ position: 'sticky', left: 0, background: '#22c55e', zIndex: 5 }}>Laba Bersih</td>
+                <td>Laba Bersih</td>
                 {labaBersih.map((val, idx) => (
                   <td key={idx} style={{ textAlign: 'right' }}>{formatRupiah(val)}</td>
                 ))}
               </tr>
               <tr style={{ background: '#3b82f6', color: 'white', fontWeight: 'bold' }}>
-                <td style={{ position: 'sticky', left: 0, background: '#3b82f6', zIndex: 5 }}>Net Margin</td>
+                <td>Net Margin</td>
                 {netMargin.map((val, idx) => (
                   <td key={idx} style={{ textAlign: 'right' }}>{formatPercent(val)}</td>
                 ))}

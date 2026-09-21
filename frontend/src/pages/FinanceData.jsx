@@ -38,6 +38,7 @@ const FinanceData = ({ category }) => {
           tanggal: row.tanggal,
           keterangan: ket,
           kategori: row.jenis,
+          kategoriTransaksi: row.kategoriFinance || '-',
           jenisPembayaran,
           pemasukan: isPemasukan ? nominal : 0,
           pengeluaran: !isPemasukan ? nominal : 0,

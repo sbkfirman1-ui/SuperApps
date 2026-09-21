@@ -52,7 +52,7 @@ const FinanceTable = ({ category, data, onResetAll, onDeleteRow }) => {
   });
 
   const exportToCSV = () => {
-    const headers = ["Tanggal", "Keterangan", "Kategori", "Jenis Pembayaran", "Pemasukan", "Pengeluaran", "Saldo"];
+    const headers = ["Tanggal", "Keterangan", "Arus Kas", "Kategori Transaksi", "Jenis Pembayaran", "Pemasukan", "Pengeluaran", "Saldo"];
     const csvRows = [headers.join(',')];
     
     filteredData.forEach((row) => {
@@ -60,6 +60,7 @@ const FinanceTable = ({ category, data, onResetAll, onDeleteRow }) => {
         `"${row.tanggal}"`,
         `"${row.keterangan}"`,
         `"${row.kategori}"`,
+        `"${row.kategoriTransaksi}"`,
         `"${row.jenisPembayaran}"`,
         row.pemasukan || 0,
         row.pengeluaran || 0,
@@ -142,7 +143,8 @@ const FinanceTable = ({ category, data, onResetAll, onDeleteRow }) => {
               <tr>
                 <th>Tanggal</th>
                 <th>Keterangan</th>
-                <th>Kategori</th>
+                <th>Arus Kas</th>
+                <th>Kategori Transaksi</th>
                 <th>Jenis Pembayaran</th>
                 <th>Pemasukan</th>
                 <th>Pengeluaran</th>
@@ -159,11 +161,17 @@ const FinanceTable = ({ category, data, onResetAll, onDeleteRow }) => {
                     <td>
                       <span style={{ 
                         color: row.kategori === 'Pemasukan' ? 'var(--text-success)' : 'var(--text-danger)',
-                        fontWeight: 'bold'
+                        fontWeight: 'bold',
+                        padding: '0.25rem 0.5rem',
+                        background: row.kategori === 'Pemasukan' ? 'var(--success-bg)' : 'var(--danger-bg)',
+                        border: `1px solid ${row.kategori === 'Pemasukan' ? 'var(--success-border)' : 'var(--danger-border)'}`,
+                        borderRadius: '999px',
+                        fontSize: '0.8rem'
                       }}>
                         {row.kategori}
                       </span>
                     </td>
+                    <td style={{ color: 'var(--text-primary)' }}>{row.kategoriTransaksi}</td>
                     <td>{row.jenisPembayaran}</td>
                     <td style={{ color: 'var(--text-success)' }}>{formatRupiah(row.pemasukan)}</td>
                     <td style={{ color: 'var(--text-danger)' }}>{formatRupiah(row.pengeluaran)}</td>
