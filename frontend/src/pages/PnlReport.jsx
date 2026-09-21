@@ -20,10 +20,12 @@ const PnlReport = ({ category }) => {
   const [loading, setLoading] = useState(false);
   const [year, setYear] = useState(new Date().getFullYear());
 
-  const financeCategories = getMasterData('financeCategories', DEFAULT_FINANCE_CATEGORIES).map(cat => ({
-    ...cat,
-    group: cat.group || (cat.type === 'Pemasukan' ? 'Pendapatan' : 'Beban Operasional')
-  }));
+  const [financeCategories, setFinanceCategories] = useState(() => {
+    return getMasterData('financeCategories', DEFAULT_FINANCE_CATEGORIES).map(cat => ({
+      ...cat,
+      group: cat.group || (cat.type === 'Pemasukan' ? 'Pendapatan' : 'Beban Operasional')
+    }));
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -41,6 +43,24 @@ const PnlReport = ({ category }) => {
 
       if (!error && financeData) {
         setData(financeData);
+        
+        // Dynamically add categories from DB if they are missing in local settings
+        setFinanceCategories(prev => {
+          const newCats = [...prev];
+          let updated = false;
+          financeData.forEach(item => {
+            if (!newCats.find(c => c.name === item.kategoriFinance)) {
+              newCats.push({
+                id: `dyn_${Date.now()}_${Math.random()}`,
+                name: item.kategoriFinance,
+                type: item.jenis,
+                group: item.jenis === 'Pemasukan' ? 'Pendapatan' : 'Beban Operasional'
+              });
+              updated = true;
+            }
+          });
+          return updated ? newCats : prev;
+        });
       }
       setLoading(false);
     };

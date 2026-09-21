@@ -11,12 +11,19 @@ export const DEFAULT_STUDIO_PRODUCTS = [
 ];
 
 export const DEFAULT_FINANCE_CATEGORIES = [
-  // Pendapatan
-  { id: 1, name: 'Job Wedding', type: 'Pemasukan', group: 'Pendapatan' },
-  { id: 2, name: 'Job Studio', type: 'Pemasukan', group: 'Pendapatan' },
-  { id: 3, name: 'Job Prewedding', type: 'Pemasukan', group: 'Pendapatan' },
-  { id: 4, name: 'Job Siraman dll', type: 'Pemasukan', group: 'Pendapatan' },
-  { id: 5, name: 'Job Wisuda', type: 'Pemasukan', group: 'Pendapatan' },
+  // Pendapatan Wedding
+  { id: 1, name: 'Job Wedding Klien', type: 'Pemasukan', group: 'Pendapatan' },
+  { id: 2, name: 'Job Wedding Vendor', type: 'Pemasukan', group: 'Pendapatan' },
+  { id: 3, name: 'Job Wedding Other', type: 'Pemasukan', group: 'Pendapatan' },
+  // Pendapatan Studio
+  { id: 4, name: 'Job Studio LB', type: 'Pemasukan', group: 'Pendapatan' },
+  { id: 5, name: 'Job Studio Prewed', type: 'Pemasukan', group: 'Pendapatan' },
+  { id: 6, name: 'Job Studio Maternity', type: 'Pemasukan', group: 'Pendapatan' },
+  // Legacy / Default
+  { id: 7, name: 'Job Wedding', type: 'Pemasukan', group: 'Pendapatan' },
+  { id: 8, name: 'Job Prewedding', type: 'Pemasukan', group: 'Pendapatan' },
+  { id: 9, name: 'Job Siraman dll', type: 'Pemasukan', group: 'Pendapatan' },
+  { id: 10, name: 'Job Wisuda', type: 'Pemasukan', group: 'Pendapatan' },
   // Beban Operasional
   { id: 6, name: 'Biaya Transport', type: 'Pengeluaran', group: 'Beban Operasional' },
   { id: 7, name: 'Biaya Gaji', type: 'Pengeluaran', group: 'Beban Operasional' },
