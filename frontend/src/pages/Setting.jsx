@@ -254,73 +254,86 @@ const Setting = () => {
                   <th style={{ width: '50px' }}>No</th>
                   <th>Nama Kategori</th>
                   <th>Tipe Arus Kas</th>
-                  <th>Grup Laporan PNL</th>
                   <th style={{ width: '100px', textAlign: 'right' }}>Aksi</th>
                 </tr>
               </thead>
               <tbody>
-                {financeCategories
-                  .filter(c => financeFilter === 'Semua' || c.type === financeFilter)
-                  .sort((a, b) => {
-                    const nameA = a.name.toLowerCase();
-                    const nameB = b.name.toLowerCase();
-                    if (financeSort === 'asc') return nameA < nameB ? -1 : 1;
-                    if (financeSort === 'desc') return nameA > nameB ? -1 : 1;
-                    return 0;
-                  })
-                  .map((c, idx) => (
-                  <tr key={c.id}>
-                    <td>{idx + 1}</td>
-                    <td>
-                      {editFinanceId === c.id ? 
-                        <input type="text" className="form-control" style={{ padding: '0.3rem' }} value={editFinanceForm.name} onChange={e => setEditFinanceForm({...editFinanceForm, name: e.target.value})} /> 
-                        : <span style={{ fontWeight: 500 }}>{c.name}</span>}
-                    </td>
-                    <td>
-                      {editFinanceId === c.id ? (
-                        <select className="form-control" style={{ padding: '0.3rem' }} value={editFinanceForm.type} onChange={e => setEditFinanceForm({...editFinanceForm, type: e.target.value, group: e.target.value === 'Pemasukan' ? 'Pendapatan' : 'Beban Operasional'})}>
-                          <option value="Pemasukan">Pemasukan</option>
-                          <option value="Pengeluaran">Pengeluaran</option>
-                        </select>
-                      ) : (
-                        <span style={{ color: c.type === 'Pemasukan' ? 'var(--text-success)' : 'var(--text-danger)', fontWeight: 600 }}>
-                          {c.type}
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      {editFinanceId === c.id ? (
-                        <select className="form-control" style={{ padding: '0.3rem' }} value={editFinanceForm.group} onChange={e => setEditFinanceForm({...editFinanceForm, group: e.target.value})}>
-                          {editFinanceForm.type === 'Pemasukan' ? (
-                            <option value="Pendapatan">Pendapatan</option>
-                          ) : (
-                            <>
-                              <option value="Beban Operasional">Beban Operasional</option>
-                              <option value="Beban Tetap">Beban Tetap</option>
-                            </>
-                          )}
-                        </select>
-                      ) : (
-                        <span style={{ color: c.type === 'Pemasukan' ? 'var(--text-success)' : 'var(--text-danger)', fontWeight: 600 }}>
-                          {c.group || c.type}
-                        </span>
-                      )}
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      {editFinanceId === c.id ? (
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                          <button className="btn" onClick={() => saveEditFinance(c.id)} style={{ padding: '0.4rem', color: 'var(--text-success)', background: 'transparent' }} title="Simpan"><Check size={16} /></button>
-                          <button className="btn" onClick={() => setEditFinanceId(null)} style={{ padding: '0.4rem', color: 'var(--text-muted)', background: 'transparent' }} title="Batal"><X size={16} /></button>
-                        </div>
-                      ) : (
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                          <button className="btn" onClick={() => startEditFinance(c)} style={{ padding: '0.4rem', color: 'var(--text-primary)', background: 'transparent' }} title="Edit"><Edit2 size={16} /></button>
-                          <button className="btn" onClick={() => deleteFinanceCategory(c.id)} style={{ padding: '0.4rem', color: 'var(--text-danger)', background: 'transparent' }} title="Hapus"><Trash2 size={16} /></button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {['Pendapatan', 'Beban Operasional', 'Beban Tetap'].map(groupName => {
+                  const groupCats = financeCategories
+                    .filter(c => (c.group || c.type) === groupName)
+                    .filter(c => financeFilter === 'Semua' || c.type === financeFilter)
+                    .sort((a, b) => {
+                      const nameA = a.name.toLowerCase();
+                      const nameB = b.name.toLowerCase();
+                      if (financeSort === 'asc') return nameA < nameB ? -1 : 1;
+                      if (financeSort === 'desc') return nameA > nameB ? -1 : 1;
+                      return 0;
+                    });
+                  
+                  if (groupCats.length === 0) return null;
+                  const isExpanded = expandedGroups[`finance-${groupName}`] !== false; // Default expanded
+
+                  return (
+                    <React.Fragment key={groupName}>
+                      {/* Accordion Header */}
+                      <tr 
+                        onClick={() => toggleGroup(`finance-${groupName}`)} 
+                        style={{ cursor: 'pointer', background: 'var(--surface-dark)', borderTop: '2px solid var(--border-glass)', transition: 'background 0.2s' }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'var(--overlay-bg-hover)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'var(--surface-dark)'}
+                      >
+                        <td colSpan="4" style={{ padding: '1rem', fontWeight: 'bold', color: 'var(--primary)', fontSize: '1rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: '4px', background: 'rgba(56, 189, 248, 0.1)', color: 'var(--primary)', transition: 'transform 0.2s' }}>
+                              {!isExpanded ? <ChevronDown size={16} /> : <Plus size={16} />}
+                            </span>
+                            <span>{groupName}</span>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 'normal', color: 'var(--text-muted)', background: 'var(--overlay-bg)', padding: '0.2rem 0.6rem', borderRadius: '12px' }}>
+                              {groupCats.length} Kategori
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                      
+                      {/* Accordion Body */}
+                      {isExpanded && groupCats.map((c, idx) => (
+                        <tr key={c.id}>
+                          <td>{idx + 1}</td>
+                          <td>
+                            {editFinanceId === c.id ? 
+                              <input type="text" className="form-control" style={{ padding: '0.3rem' }} value={editFinanceForm.name} onChange={e => setEditFinanceForm({...editFinanceForm, name: e.target.value})} /> 
+                              : <span style={{ fontWeight: 500 }}>{c.name}</span>}
+                          </td>
+                          <td>
+                            {editFinanceId === c.id ? (
+                              <select className="form-control" style={{ padding: '0.3rem' }} value={editFinanceForm.type} onChange={e => setEditFinanceForm({...editFinanceForm, type: e.target.value, group: e.target.value === 'Pemasukan' ? 'Pendapatan' : 'Beban Operasional'})}>
+                                <option value="Pemasukan">Pemasukan</option>
+                                <option value="Pengeluaran">Pengeluaran</option>
+                              </select>
+                            ) : (
+                              <span style={{ color: c.type === 'Pemasukan' ? 'var(--text-success)' : 'var(--text-danger)', fontWeight: 600 }}>
+                                {c.type}
+                              </span>
+                            )}
+                          </td>
+                          <td style={{ textAlign: 'right' }}>
+                            {editFinanceId === c.id ? (
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                                <button className="btn" onClick={() => saveEditFinance(c.id)} style={{ padding: '0.4rem', color: 'var(--text-success)', background: 'transparent' }} title="Simpan"><Check size={16} /></button>
+                                <button className="btn" onClick={() => setEditFinanceId(null)} style={{ padding: '0.4rem', color: 'var(--text-muted)', background: 'transparent' }} title="Batal"><X size={16} /></button>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                                <button className="btn" onClick={() => startEditFinance(c)} style={{ padding: '0.4rem', color: 'var(--text-primary)', background: 'transparent' }} title="Edit"><Edit2 size={16} /></button>
+                                <button className="btn" onClick={() => deleteFinanceCategory(c.id)} style={{ padding: '0.4rem', color: 'var(--text-danger)', background: 'transparent' }} title="Hapus"><Trash2 size={16} /></button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
