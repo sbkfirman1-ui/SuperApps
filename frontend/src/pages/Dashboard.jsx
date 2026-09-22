@@ -510,7 +510,17 @@ const Dashboard = ({ category }) => {
               <div style={{ width: '100%', height: 380 }}>
                 <ResponsiveContainer>
                   <PieChart>
-                    <Pie data={topProducts} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value" stroke="none">
+                    <Pie 
+                      data={topProducts} 
+                      cx="50%" 
+                      cy="50%" 
+                      innerRadius={50} 
+                      outerRadius={90} 
+                      paddingAngle={5} 
+                      dataKey="value" 
+                      stroke="none"
+                      label={({ percent }) => percent > 0.03 ? `${(percent * 100).toFixed(1)}%` : ''}
+                    >
                       {topProducts.map((_, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                     </Pie>
                     <Tooltip
