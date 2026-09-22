@@ -9,13 +9,19 @@ import {
 } from '../utils/masterData';
 
 const Setting = () => {
-  const [financeCategories, setFinanceCategories] = useState(() => {
-    return getMasterData('financeCategories', DEFAULT_FINANCE_CATEGORIES).map(cat => ({
-      ...cat,
-      group: cat.group || (cat.type === 'Pemasukan' ? 'Pendapatan' : 'Beban Operasional')
-    }));
-  });
-  useEffect(() => { setMasterData('financeCategories', financeCategories); }, [financeCategories]);
+  const [financeCategories, setFinanceCategories] = useState([]);
+  const [loadingFinance, setLoadingFinance] = useState(true);
+
+  const fetchFinanceCategories = async () => {
+    setLoadingFinance(true);
+    const { data } = await supabase.from('finance_categories').select('*').order('id', { ascending: true });
+    if (data) setFinanceCategories(data);
+    setLoadingFinance(false);
+  };
+
+  useEffect(() => {
+    fetchFinanceCategories();
+  }, []);
 
   // Theme state
   const [theme, setTheme] = useState(() => getMasterData('app_theme', 'dark'));
@@ -38,16 +44,40 @@ const Setting = () => {
   const [editFinanceForm, setEditFinanceForm] = useState({ name: '', type: '', group: '' });
 
   // Handle Finance Categories
-  const addFinanceCategory = () => {
+  const addFinanceCategory = async () => {
     if (!newFinance.name) return;
-    setFinanceCategories([...financeCategories, { id: Date.now(), name: newFinance.name, type: newFinance.type, group: newFinance.group }]);
-    setNewFinance({ name: '', type: 'Pengeluaran', group: 'Beban Operasional' });
+    const { data, error } = await supabase.from('finance_categories').insert([{
+      name: newFinance.name,
+      type: newFinance.type,
+      group: newFinance.group
+    }]).select();
+    
+    if (!error && data) {
+      setFinanceCategories([...financeCategories, data[0]]);
+      setNewFinance({ name: '', type: 'Pengeluaran', group: 'Beban Operasional' });
+    }
   };
-  const deleteFinanceCategory = (id) => { setFinanceCategories(financeCategories.filter(c => c.id !== id)); };
+
+  const deleteFinanceCategory = async (id) => { 
+    const { error } = await supabase.from('finance_categories').delete().eq('id', id);
+    if (!error) {
+      setFinanceCategories(financeCategories.filter(c => c.id !== id)); 
+    }
+  };
+
   const startEditFinance = (c) => { setEditFinanceId(c.id); setEditFinanceForm({ name: c.name, type: c.type, group: c.group || 'Beban Operasional' }); };
-  const saveEditFinance = (id) => {
-    setFinanceCategories(financeCategories.map(c => c.id === id ? { ...c, name: editFinanceForm.name, type: editFinanceForm.type, group: editFinanceForm.group } : c));
-    setEditFinanceId(null);
+  
+  const saveEditFinance = async (id) => {
+    const { error } = await supabase.from('finance_categories').update({
+      name: editFinanceForm.name,
+      type: editFinanceForm.type,
+      group: editFinanceForm.group
+    }).eq('id', id);
+
+    if (!error) {
+      setFinanceCategories(financeCategories.map(c => c.id === id ? { ...c, name: editFinanceForm.name, type: editFinanceForm.type, group: editFinanceForm.group } : c));
+      setEditFinanceId(null);
+    }
   };
 
   // Price Book states
@@ -258,7 +288,11 @@ const Setting = () => {
                 </tr>
               </thead>
               <tbody>
-                {['Pendapatan', 'Beban Operasional', 'Beban Tetap'].map(groupName => {
+                {loadingFinance ? (
+                  <tr><td colSpan="4" style={{ padding: 0 }}><Loader text="Memuat kategori finance..." /></td></tr>
+                ) : financeCategories.length === 0 ? (
+                  <tr><td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Belum ada kategori</td></tr>
+                ) : ['Pendapatan', 'Beban Operasional', 'Beban Tetap'].map(groupName => {
                   const groupCats = financeCategories
                     .filter(c => (c.group || c.type) === groupName)
                     .filter(c => financeFilter === 'Semua' || c.type === financeFilter)

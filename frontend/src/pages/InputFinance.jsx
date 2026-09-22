@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Save, ChevronDown, Search } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { getMasterData, DEFAULT_FINANCE_CATEGORIES } from '../utils/masterData';
 
 const formatRupiah = (number) => {
   if (isNaN(number) || number === null || number === '') return 'Rp.0';
@@ -104,18 +103,27 @@ const InputFinance = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
   
-  const financeCategories = getMasterData('financeCategories', DEFAULT_FINANCE_CATEGORIES).map(cat => ({
-    ...cat,
-    group: cat.group || (cat.type === 'Pemasukan' ? 'Pendapatan' : 'Beban Operasional')
-  }));
+  const [financeCategories, setFinanceCategories] = useState([]);
+  const [loadingCats, setLoadingCats] = useState(true);
+
+  useEffect(() => {
+    const fetchCats = async () => {
+      const { data } = await supabase.from('finance_categories').select('*').order('name', { ascending: true });
+      if (data) {
+        setFinanceCategories(data);
+      }
+      setLoadingCats(false);
+    };
+    fetchCats();
+  }, []);
 
   const [formData, setFormData] = useState({
     kategori_layanan: 'Wedding',
     tanggal: '',
     keterangan: '',
     metode_pembayaran: 'Transfer',
-    kategori_transaksi: financeCategories.length > 0 ? financeCategories[0].name : '',
-    arus_kas: financeCategories.length > 0 ? financeCategories[0].type : 'Pengeluaran',
+    kategori_transaksi: '',
+    arus_kas: 'Pengeluaran',
     nominal: ''
   });
 
@@ -131,6 +139,15 @@ const InputFinance = () => {
       return true;
     }).sort((a, b) => a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1);
   };
+
+  useEffect(() => {
+    if (!loadingCats && formData.kategori_transaksi === '' && financeCategories.length > 0) {
+      const validCats = getValidCategories(formData.kategori_layanan, formData.arus_kas);
+      if (validCats.length > 0) {
+        setFormData(prev => ({ ...prev, kategori_transaksi: validCats[0].name }));
+      }
+    }
+  }, [loadingCats, financeCategories, formData.kategori_layanan, formData.arus_kas]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

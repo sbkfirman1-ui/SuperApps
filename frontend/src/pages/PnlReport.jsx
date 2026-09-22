@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Loader from '../components/Loader';
 import { supabase } from '../lib/supabase';
-import { getMasterData, DEFAULT_FINANCE_CATEGORIES } from '../utils/masterData';
 
 const formatRupiah = (number) => {
   if (isNaN(number) || number === null || number === '') return 'Rp0';
@@ -20,17 +19,14 @@ const PnlReport = ({ category }) => {
   const [loading, setLoading] = useState(false);
   const [year, setYear] = useState(new Date().getFullYear());
 
-  const [financeCategories, setFinanceCategories] = useState(() => {
-    return getMasterData('financeCategories', DEFAULT_FINANCE_CATEGORIES).map(cat => ({
-      ...cat,
-      group: cat.group || (cat.type === 'Pemasukan' ? 'Pendapatan' : 'Beban Operasional')
-    }));
-  });
+  const [financeCategories, setFinanceCategories] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      // Fetch all finance data for this category and year
+      
+      const { data: cats } = await supabase.from('finance_categories').select('*').order('id', { ascending: true });
+      
       const startOfYear = `${year}-01-01`;
       const endOfYear = `${year}-12-31`;
 
@@ -44,23 +40,20 @@ const PnlReport = ({ category }) => {
       if (!error && financeData) {
         setData(financeData);
         
-        // Dynamically add categories from DB if they are missing in local settings
-        setFinanceCategories(prev => {
-          const newCats = [...prev];
-          let updated = false;
-          financeData.forEach(item => {
-            if (!newCats.find(c => c.name === item.kategoriFinance)) {
-              newCats.push({
-                id: `dyn_${Date.now()}_${Math.random()}`,
-                name: item.kategoriFinance,
-                type: item.jenis,
-                group: item.jenis === 'Pemasukan' ? 'Pendapatan' : 'Beban Operasional'
-              });
-              updated = true;
-            }
-          });
-          return updated ? newCats : prev;
+        let baseCats = cats || [];
+        
+        // Dynamically add categories from DB if they are missing in settings (deleted)
+        financeData.forEach(item => {
+          if (!baseCats.find(c => c.name === item.kategoriFinance)) {
+            baseCats.push({
+              id: `dyn_${Math.random()}`,
+              name: item.kategoriFinance,
+              type: item.jenis,
+              group: item.jenis === 'Pemasukan' ? 'Pendapatan' : 'Beban Operasional'
+            });
+          }
         });
+        setFinanceCategories([...baseCats]);
       }
       setLoading(false);
     };

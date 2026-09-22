@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { Download, Trash2, Edit2, Check, X } from 'lucide-react';
 import { confirmDelete } from '../utils/swal';
-import { getMasterData, DEFAULT_FINANCE_CATEGORIES } from '../utils/masterData';
 
 const formatRupiah = (number) => {
   if (isNaN(number) || number === null || number === '') return 'Rp.0';
   return 'Rp.' + Number(number).toLocaleString('id-ID');
 };
 
-const FinanceTable = ({ category, data, onResetAll, onDeleteRow, onEditRow }) => {
+const FinanceTable = ({ category, data, financeCategories = [], onResetAll, onDeleteRow, onEditRow }) => {
   const [tempStartDate, setTempStartDate] = useState('');
   const [tempEndDate, setTempEndDate] = useState('');
   const [tempPayment, setTempPayment] = useState('');
@@ -16,8 +15,6 @@ const FinanceTable = ({ category, data, onResetAll, onDeleteRow, onEditRow }) =>
   const [activeStartDate, setActiveStartDate] = useState('');
   const [activeEndDate, setActiveEndDate] = useState('');
   const [activePayment, setActivePayment] = useState('');
-
-  const financeCategories = getMasterData('financeCategories', DEFAULT_FINANCE_CATEGORIES);
 
   const [editId, setEditId] = useState(null);
   const [editForm, setEditForm] = useState({

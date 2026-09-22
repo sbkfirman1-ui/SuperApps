@@ -5,15 +5,19 @@ import FinanceTable from '../components/FinanceTable';
 
 const FinanceData = ({ category }) => {
   const [data, setData] = useState([]);
+  const [financeCategories, setFinanceCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const { data: finData, error } = await supabase
-      .from('finance')
-      .select('*')
-      .eq('category', category)
-      .order('tanggal', { ascending: true });
+    const [finResult, catResult] = await Promise.all([
+      supabase.from('finance').select('*').eq('category', category).order('tanggal', { ascending: true }),
+      supabase.from('finance_categories').select('*').order('name', { ascending: true })
+    ]);
+
+    const finData = finResult.data;
+    if (catResult.data) setFinanceCategories(catResult.data);
+    const error = finResult.error;
 
     if (!error && finData) {
       // Calculate running saldo
@@ -94,6 +98,7 @@ const FinanceData = ({ category }) => {
       <FinanceTable
         category={category}
         data={data}
+        financeCategories={financeCategories}
         onResetAll={handleResetAll}
         onDeleteRow={handleDeleteRow}
         onEditRow={handleEditRow}
