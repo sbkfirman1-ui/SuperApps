@@ -123,9 +123,11 @@ const InputFinance = () => {
     return financeCategories.filter(c => {
       if (c.type !== arusKas) return false;
       const lowerName = c.name.toLowerCase();
-      // Filter based on service type
-      if (layanan === 'Wedding' && lowerName.startsWith('job studio')) return false;
-      if (layanan === 'Studio' && lowerName.startsWith('job wedding')) return false;
+      
+      // Filter strict based on keywords in category name
+      if (layanan === 'Wedding' && lowerName.includes('studio')) return false;
+      if (layanan === 'Studio' && lowerName.includes('wedding')) return false;
+      
       return true;
     }).sort((a, b) => a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1);
   };
@@ -203,7 +205,7 @@ const InputFinance = () => {
 
   const categoryOptions = filteredCategories.map(cat => ({
     value: cat.name,
-    label: `${cat.name} (${cat.group})`
+    label: cat.name
   }));
 
   return (
