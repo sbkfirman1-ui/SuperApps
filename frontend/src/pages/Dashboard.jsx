@@ -482,7 +482,7 @@ const Dashboard = ({ category }) => {
           <div className="charts-grid">
             <div className="chart-card glass-panel animate-stagger" style={{ animationDelay: '0.85s' }}>
               <div className="chart-header"><TrendingUp size={20} className="text-primary" /> Growth Sales (Laba Bersih)</div>
-              <div style={{ width: '100%', height: 300 }}>
+              <div style={{ width: '100%', height: 380 }}>
                 <ResponsiveContainer>
                   <AreaChart data={dataSales} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                     <defs>
@@ -507,7 +507,7 @@ const Dashboard = ({ category }) => {
 
             <div className="chart-card glass-panel animate-stagger" style={{ animationDelay: '0.9s' }}>
               <div className="chart-header"><PieChartIcon size={20} className="text-primary" /> Produk Paling Laris</div>
-              <div style={{ width: '100%', height: 300 }}>
+              <div style={{ width: '100%', height: 380 }}>
                 <ResponsiveContainer>
                   <PieChart>
                     <Pie data={topProducts} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value" stroke="none">
@@ -521,7 +521,10 @@ const Dashboard = ({ category }) => {
                          return [`${value} Transaksi (${percent}%)`, name];
                       }}
                     />
-                    <Legend verticalAlign="bottom" height={36} />
+                    <Legend 
+                      verticalAlign="bottom" 
+                      wrapperStyle={{ paddingTop: '20px', paddingBottom: '10px', fontSize: '13px', lineHeight: '20px' }} 
+                    />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
