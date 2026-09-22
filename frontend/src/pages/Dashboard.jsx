@@ -512,14 +512,14 @@ const Dashboard = ({ category }) => {
                   <PieChart>
                     <Pie 
                       data={topProducts} 
-                      cx="35%" 
+                      cx="30%" 
                       cy="50%" 
-                      innerRadius={50} 
-                      outerRadius={90} 
+                      innerRadius={40} 
+                      outerRadius={75} 
                       paddingAngle={5} 
                       dataKey="value" 
                       stroke="none"
-                      label={({ percent }) => percent > 0.03 ? `${(percent * 100).toFixed(1)}%` : ''}
+                      label={({ percent }) => percent > 0.03 ? `${(percent * 100).toFixed(0)}%` : ''}
                     >
                       {topProducts.map((_, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                     </Pie>
@@ -535,7 +535,7 @@ const Dashboard = ({ category }) => {
                       layout="vertical"
                       verticalAlign="middle"
                       align="right"
-                      wrapperStyle={{ fontSize: '13px', lineHeight: '24px', width: '50%' }} 
+                      wrapperStyle={{ fontSize: '11px', lineHeight: '18px', width: '60%', right: -10 }} 
                     />
                   </PieChart>
                 </ResponsiveContainer>
