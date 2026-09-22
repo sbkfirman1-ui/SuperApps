@@ -512,10 +512,10 @@ const Dashboard = ({ category }) => {
                   <PieChart>
                     <Pie 
                       data={topProducts} 
-                      cx="30%" 
-                      cy="50%" 
-                      innerRadius={40} 
-                      outerRadius={75} 
+                      cx="50%" 
+                      cy="45%" 
+                      innerRadius={50} 
+                      outerRadius={85} 
                       paddingAngle={5} 
                       dataKey="value" 
                       stroke="none"
@@ -533,9 +533,9 @@ const Dashboard = ({ category }) => {
                     />
                     <Legend 
                       layout="vertical"
-                      verticalAlign="middle"
+                      verticalAlign="bottom"
                       align="right"
-                      wrapperStyle={{ fontSize: '11px', lineHeight: '18px', width: '60%', right: -10 }} 
+                      wrapperStyle={{ fontSize: '12px', lineHeight: '20px', paddingTop: '10px', paddingBottom: '10px' }} 
                     />
                   </PieChart>
                 </ResponsiveContainer>
