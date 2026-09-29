@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { getMasterData } from './utils/masterData';
 import AppLayout from './layouts/AppLayout';
 import Dashboard from './pages/Dashboard';
+import ConsolidateDashboard from './pages/ConsolidateDashboard';
 import InputTransaksi from './pages/InputTransaksi';
 import Wedding from './pages/Wedding';
 import Studio from './pages/Studio';
@@ -30,6 +31,7 @@ function App() {
           <Route path="job-laki" element={<JobLaki />} />
           <Route path="dashboard/wedding" element={<Dashboard category="Wedding" />} />
           <Route path="dashboard/studio" element={<Dashboard category="Studio" />} />
+          <Route path="dashboard/konsolidasi" element={<ConsolidateDashboard />} />
           <Route path="input" element={<InputTransaksi />} />
           <Route path="data/wedding" element={<Wedding />} />
           <Route path="data/studio" element={<Studio />} />

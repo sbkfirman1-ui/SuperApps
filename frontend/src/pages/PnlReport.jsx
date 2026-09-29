@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Loader from '../components/Loader';
 import { supabase } from '../lib/supabase';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { FileText, FileSpreadsheet } from 'lucide-react';
 
 const formatRupiah = (number) => {
   if (isNaN(number) || number === null || number === '') return 'Rp0';
@@ -151,11 +154,13 @@ const PnlReport = ({ category }) => {
     }
   });
 
+  const grossProfit = Array(12).fill(0);
   const totalBeban = Array(12).fill(0);
   const labaBersih = Array(12).fill(0);
   const netMargin = Array(12).fill(0);
 
   for (let i = 0; i < 12; i++) {
+    grossProfit[i] = pendapatanTotals[i] - operasionalTotals[i];
     totalBeban[i] = operasionalTotals[i] + tetapTotals[i];
     labaBersih[i] = pendapatanTotals[i] - totalBeban[i];
     netMargin[i] = pendapatanTotals[i] > 0 ? (labaBersih[i] / pendapatanTotals[i]) * 100 : 0;
@@ -166,6 +171,89 @@ const PnlReport = ({ category }) => {
     return [currentYear - 1, currentYear, currentYear + 1];
   };
 
+  const generateExportData = (formatted = false) => {
+    const rows = [];
+    const header = ['Akun', ...MONTHS];
+    rows.push(header);
+
+    const fmt = (val) => formatted ? formatRupiah(val) : val;
+    const fmtPct = (val) => formatted ? formatPercent(val) : (val).toFixed(2) + '%';
+
+    const addGroup = (groupName) => {
+      let groupCats = financeCategories.filter(cat => cat.group === groupName);
+      if (groupName === 'Pendapatan') {
+        groupCats = groupCats.filter(cat => {
+          const lowerName = cat.name.toLowerCase();
+          if (category === 'Wedding' && lowerName.includes('studio')) return false;
+          if (category === 'Studio' && lowerName.includes('wedding')) return false;
+          return true;
+        });
+      }
+      if (groupCats.length === 0) return;
+
+      rows.push([groupName, ...Array(12).fill('')]);
+      
+      const totals = Array(12).fill(0);
+      groupCats.forEach(cat => {
+        const row = [cat.name];
+        for (let i = 0; i < 12; i++) {
+          row.push(fmt(matrix[cat.name][i]));
+          totals[i] += matrix[cat.name][i];
+        }
+        rows.push(row);
+      });
+      rows.push([`Total ${groupName}`, ...totals.map(fmt)]);
+      rows.push(Array(13).fill('')); // Spacer
+    };
+
+    addGroup('Pendapatan');
+    addGroup('COGS');
+
+    rows.push(['Gross Profit / Laba Kotor', ...grossProfit.map(fmt)]);
+    rows.push(Array(13).fill('')); // Spacer
+
+    addGroup('Fixed Cost');
+
+    rows.push(['Total Beban', ...totalBeban.map(fmt)]);
+    rows.push(['Net Profit / Laba Bersih', ...labaBersih.map(fmt)]);
+    rows.push(['Net Margin', ...netMargin.map(fmtPct)]);
+
+    return rows;
+  };
+
+  const exportCSV = () => {
+    const data = generateExportData(false);
+    const csvContent = data.map(e => e.map(item => `"${item}"`).join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `PNL_${category}_${year}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportPDF = () => {
+    const doc = new jsPDF('landscape');
+    const data = generateExportData(true);
+    const header = data[0];
+    const body = data.slice(1);
+    
+    doc.text(`Profit and Loss - ${category} (${year})`, 14, 15);
+    autoTable(doc, {
+      head: [header],
+      body: body,
+      startY: 20,
+      styles: { fontSize: 7, cellPadding: 2 },
+      columnStyles: {
+        0: { cellWidth: 40 }
+      },
+      headStyles: { fillColor: [37, 99, 235] }
+    });
+    doc.save(`PNL_${category}_${year}.pdf`);
+  };
+
   return (
     <div className="animate-fade-in" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
@@ -173,13 +261,23 @@ const PnlReport = ({ category }) => {
           <h1 className="page-title">Profit and Loss - {category}</h1>
           <p className="page-subtitle">Laporan Laba Rugi bulanan divisi {category}</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <label style={{ fontWeight: 600 }}>Tahun</label>
-          <select className="form-control" style={{ width: '100px' }} value={year} onChange={e => setYear(Number(e.target.value))}>
-            {getYearOptions().map(y => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button className="btn" onClick={exportCSV} style={{ padding: '0.4rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--overlay-bg)', color: 'var(--text-main)', fontSize: '0.9rem' }}>
+              <FileSpreadsheet size={16} /> CSV
+            </button>
+            <button className="btn" onClick={exportPDF} style={{ padding: '0.4rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--danger-bg)', color: 'var(--text-danger)', fontSize: '0.9rem' }}>
+              <FileText size={16} /> PDF
+            </button>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <label style={{ fontWeight: 600 }}>Tahun</label>
+            <select className="form-control" style={{ width: '100px' }} value={year} onChange={e => setYear(Number(e.target.value))}>
+              {getYearOptions().map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -202,6 +300,14 @@ const PnlReport = ({ category }) => {
 
               {renderGroup('COGS')}
 
+              {/* Gross Profit / Laba Kotor */}
+              <tr style={{ background: '#f59e0b', color: 'white', fontWeight: 'bold' }}>
+                <td>Gross Profit / Laba Kotor</td>
+                {grossProfit.map((val, idx) => (
+                  <td key={idx} style={{ textAlign: 'right' }}>{formatRupiah(val)}</td>
+                ))}
+              </tr>
+
               {/* Spacer */}
               <tr><td colSpan={13} style={{ height: '20px' }}></td></tr>
 
@@ -218,7 +324,7 @@ const PnlReport = ({ category }) => {
                 ))}
               </tr>
               <tr style={{ background: '#22c55e', color: 'white', fontWeight: 'bold' }}>
-                <td>Laba Bersih</td>
+                <td>Net Profit / Laba Bersih</td>
                 {labaBersih.map((val, idx) => (
                   <td key={idx} style={{ textAlign: 'right' }}>{formatRupiah(val)}</td>
                 ))}

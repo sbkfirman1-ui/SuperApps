@@ -24,6 +24,9 @@ const Sidebar = () => {
         <NavLink to="/dashboard/studio" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <LayoutDashboard size={20} /> Dashboard Studio
         </NavLink>
+        <NavLink to="/dashboard/konsolidasi" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+          <LayoutDashboard size={20} /> Dashboard Konsolidasi
+        </NavLink>
 
         <div className="nav-group">
           <div className="nav-link-wrapper">

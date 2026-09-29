@@ -481,7 +481,7 @@ const Dashboard = ({ category }) => {
 
           <div className="charts-grid">
             <div className="chart-card glass-panel animate-stagger" style={{ animationDelay: '0.85s' }}>
-              <div className="chart-header"><TrendingUp size={20} className="text-primary" /> Growth Sales (Laba Bersih)</div>
+              <div className="chart-header"><TrendingUp size={20} className="text-primary" /> Growth Sales (Net Profit / Laba Bersih)</div>
               <div style={{ width: '100%', height: 380 }}>
                 <ResponsiveContainer>
                   <AreaChart data={dataSales} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
