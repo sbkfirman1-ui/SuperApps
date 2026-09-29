@@ -24,24 +24,24 @@ export const DEFAULT_FINANCE_CATEGORIES = [
   { id: 8, name: 'Job Prewedding', type: 'Pemasukan', group: 'Pendapatan' },
   { id: 9, name: 'Job Siraman dll', type: 'Pemasukan', group: 'Pendapatan' },
   { id: 10, name: 'Job Wisuda', type: 'Pemasukan', group: 'Pendapatan' },
-  // Beban Operasional
-  { id: 6, name: 'Biaya Transport', type: 'Pengeluaran', group: 'Beban Operasional' },
-  { id: 7, name: 'Biaya Gaji', type: 'Pengeluaran', group: 'Beban Operasional' },
-  { id: 8, name: 'Biaya Upah Freelance', type: 'Pengeluaran', group: 'Beban Operasional' },
-  { id: 9, name: 'Biaya Marketing', type: 'Pengeluaran', group: 'Beban Operasional' },
-  { id: 10, name: 'Biaya Sewa Kamera', type: 'Pengeluaran', group: 'Beban Operasional' },
-  { id: 11, name: 'Biaya Capex', type: 'Pengeluaran', group: 'Beban Operasional' },
-  { id: 12, name: 'Biaya Maintenance', type: 'Pengeluaran', group: 'Beban Operasional' },
-  { id: 13, name: 'Bonus Pegawai', type: 'Pengeluaran', group: 'Beban Operasional' },
-  // Beban Tetap
-  { id: 14, name: 'Biaya Wifi', type: 'Pengeluaran', group: 'Beban Tetap' },
-  { id: 15, name: 'Biaya Listrik', type: 'Pengeluaran', group: 'Beban Tetap' },
-  { id: 16, name: 'Biaya Cetak Magazine', type: 'Pengeluaran', group: 'Beban Tetap' },
-  { id: 17, name: 'Biaya Cetak Album', type: 'Pengeluaran', group: 'Beban Tetap' },
-  { id: 18, name: 'Biaya Cetak', type: 'Pengeluaran', group: 'Beban Tetap' },
-  { id: 19, name: 'Biaya Sewa Studio', type: 'Pengeluaran', group: 'Beban Tetap' },
-  { id: 20, name: 'Biaya Flashdisk', type: 'Pengeluaran', group: 'Beban Tetap' },
-  { id: 21, name: 'Pajak', type: 'Pengeluaran', group: 'Beban Tetap' },
+  // COGS
+  { id: 6, name: 'Biaya Transport', type: 'Pengeluaran', group: 'COGS' },
+  { id: 7, name: 'Biaya Gaji', type: 'Pengeluaran', group: 'COGS' },
+  { id: 8, name: 'Biaya Upah Freelance', type: 'Pengeluaran', group: 'COGS' },
+  { id: 9, name: 'Biaya Marketing', type: 'Pengeluaran', group: 'COGS' },
+  { id: 10, name: 'Biaya Sewa Kamera', type: 'Pengeluaran', group: 'COGS' },
+  { id: 11, name: 'Biaya Capex', type: 'Pengeluaran', group: 'COGS' },
+  { id: 12, name: 'Biaya Maintenance', type: 'Pengeluaran', group: 'COGS' },
+  { id: 13, name: 'Bonus Pegawai', type: 'Pengeluaran', group: 'COGS' },
+  // Fixed Cost
+  { id: 14, name: 'Biaya Wifi', type: 'Pengeluaran', group: 'Fixed Cost' },
+  { id: 15, name: 'Biaya Listrik', type: 'Pengeluaran', group: 'Fixed Cost' },
+  { id: 16, name: 'Biaya Cetak Magazine', type: 'Pengeluaran', group: 'Fixed Cost' },
+  { id: 17, name: 'Biaya Cetak Album', type: 'Pengeluaran', group: 'Fixed Cost' },
+  { id: 18, name: 'Biaya Cetak', type: 'Pengeluaran', group: 'Fixed Cost' },
+  { id: 19, name: 'Biaya Sewa Studio', type: 'Pengeluaran', group: 'Fixed Cost' },
+  { id: 20, name: 'Biaya Flashdisk', type: 'Pengeluaran', group: 'Fixed Cost' },
+  { id: 21, name: 'Pajak', type: 'Pengeluaran', group: 'Fixed Cost' },
 ];
 
 export const getMasterData = (key, defaultData) => {

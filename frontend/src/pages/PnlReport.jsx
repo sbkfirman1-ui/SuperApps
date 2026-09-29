@@ -49,7 +49,7 @@ const PnlReport = ({ category }) => {
               id: `dyn_${Math.random()}`,
               name: item.kategoriFinance,
               type: item.jenis,
-              group: item.jenis === 'Pemasukan' ? 'Pendapatan' : 'Beban Operasional'
+              group: item.jenis === 'Pemasukan' ? 'Pendapatan' : 'COGS'
             });
           }
         });
@@ -146,8 +146,8 @@ const PnlReport = ({ category }) => {
 
     for (let i = 0; i < 12; i++) {
       if (cat.group === 'Pendapatan' && includePendapatan) pendapatanTotals[i] += matrix[cat.name][i];
-      else if (cat.group === 'Beban Operasional') operasionalTotals[i] += matrix[cat.name][i];
-      else if (cat.group === 'Beban Tetap') tetapTotals[i] += matrix[cat.name][i];
+      else if (cat.group === 'COGS') operasionalTotals[i] += matrix[cat.name][i];
+      else if (cat.group === 'Fixed Cost') tetapTotals[i] += matrix[cat.name][i];
     }
   });
 
@@ -200,12 +200,12 @@ const PnlReport = ({ category }) => {
               {/* Spacer */}
               <tr><td colSpan={13} style={{ height: '20px' }}></td></tr>
 
-              {renderGroup('Beban Operasional')}
+              {renderGroup('COGS')}
 
               {/* Spacer */}
               <tr><td colSpan={13} style={{ height: '20px' }}></td></tr>
 
-              {renderGroup('Beban Tetap')}
+              {renderGroup('Fixed Cost')}
 
               {/* Spacer */}
               <tr><td colSpan={13} style={{ height: '20px' }}></td></tr>

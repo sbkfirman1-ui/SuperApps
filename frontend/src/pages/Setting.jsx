@@ -32,8 +32,7 @@ const Setting = () => {
     document.documentElement.setAttribute('data-theme', newTheme);
   };
 
-  // Form states for adding new items
-  const [newFinance, setNewFinance] = useState({ name: '', type: 'Pengeluaran', group: 'Beban Operasional' });
+  const [newFinance, setNewFinance] = useState({ name: '', type: 'Pengeluaran', group: 'COGS' });
 
   // Filter & Sort states
   const [financeSort, setFinanceSort] = useState('asc'); // 'asc' or 'desc'
@@ -54,7 +53,7 @@ const Setting = () => {
     
     if (!error && data) {
       setFinanceCategories([...financeCategories, data[0]]);
-      setNewFinance({ name: '', type: 'Pengeluaran', group: 'Beban Operasional' });
+      setNewFinance({ name: '', type: 'Pengeluaran', group: 'COGS' });
     }
   };
 
@@ -65,7 +64,7 @@ const Setting = () => {
     }
   };
 
-  const startEditFinance = (c) => { setEditFinanceId(c.id); setEditFinanceForm({ name: c.name, type: c.type, group: c.group || 'Beban Operasional' }); };
+  const startEditFinance = (c) => { setEditFinanceId(c.id); setEditFinanceForm({ name: c.name, type: c.type, group: c.group || 'COGS' }); };
   
   const saveEditFinance = async (id) => {
     const { error } = await supabase.from('finance_categories').update({
@@ -292,7 +291,7 @@ const Setting = () => {
                   <tr><td colSpan="4" style={{ padding: 0 }}><Loader text="Memuat kategori finance..." /></td></tr>
                 ) : financeCategories.length === 0 ? (
                   <tr><td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Belum ada kategori</td></tr>
-                ) : ['Pendapatan', 'Beban Operasional', 'Beban Tetap'].map(groupName => {
+                ) : ['Pendapatan', 'COGS', 'Fixed Cost'].map(groupName => {
                   const groupCats = financeCategories
                     .filter(c => (c.group || c.type) === groupName)
                     .filter(c => financeFilter === 'Semua' || c.type === financeFilter)
@@ -340,7 +339,7 @@ const Setting = () => {
                           </td>
                           <td>
                             {editFinanceId === c.id ? (
-                              <select className="form-control" style={{ padding: '0.3rem' }} value={editFinanceForm.type} onChange={e => setEditFinanceForm({...editFinanceForm, type: e.target.value, group: e.target.value === 'Pemasukan' ? 'Pendapatan' : 'Beban Operasional'})}>
+                              <select className="form-control" style={{ padding: '0.3rem' }} value={editFinanceForm.type} onChange={e => setEditFinanceForm({...editFinanceForm, type: e.target.value, group: e.target.value === 'Pemasukan' ? 'Pendapatan' : 'COGS'})}>
                                 <option value="Pemasukan">Pemasukan</option>
                                 <option value="Pengeluaran">Pengeluaran</option>
                               </select>
@@ -379,7 +378,7 @@ const Setting = () => {
             </div>
             <div className="form-group" style={{ marginBottom: 0, flex: 1 }}>
               <label className="form-label" style={{ fontSize: '0.85rem' }}>Tipe Arus Kas</label>
-              <select className="form-control" value={newFinance.type} onChange={(e) => setNewFinance({...newFinance, type: e.target.value, group: e.target.value === 'Pemasukan' ? 'Pendapatan' : 'Beban Operasional'})}>
+              <select className="form-control" value={newFinance.type} onChange={(e) => setNewFinance({...newFinance, type: e.target.value, group: e.target.value === 'Pemasukan' ? 'Pendapatan' : 'COGS'})}>
                 <option value="Pengeluaran">Pengeluaran</option>
                 <option value="Pemasukan">Pemasukan</option>
               </select>
@@ -391,8 +390,8 @@ const Setting = () => {
                   <option value="Pendapatan">Pendapatan</option>
                 ) : (
                   <>
-                    <option value="Beban Operasional">Beban Operasional</option>
-                    <option value="Beban Tetap">Beban Tetap</option>
+                    <option value="COGS">COGS</option>
+                    <option value="Fixed Cost">Fixed Cost</option>
                   </>
                 )}
               </select>

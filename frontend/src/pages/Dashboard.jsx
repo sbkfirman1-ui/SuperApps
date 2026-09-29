@@ -170,8 +170,8 @@ const Dashboard = ({ category }) => {
         const catDef = financeCategories.find(c => c.name === f.kategoriFinance);
         if (catDef) {
           if (catDef.group === 'Pendapatan') totalPendapatanFinance += nom;
-          else if (catDef.group === 'Beban Operasional') totalBebanOpFinance += nom;
-          else if (catDef.group === 'Beban Tetap') totalBebanTetapFinance += nom;
+          else if (catDef.group === 'COGS') totalBebanOpFinance += nom;
+          else if (catDef.group === 'Fixed Cost') totalBebanTetapFinance += nom;
         } else {
            // Fallback
            if (isPemasukan) totalPendapatanFinance += nom;
@@ -193,8 +193,8 @@ const Dashboard = ({ category }) => {
 
         if (catDef) {
           if (catDef.group === 'Pendapatan') monthlyData[key].pendapatan += nom;
-          else if (catDef.group === 'Beban Operasional') monthlyData[key].bebanOp += nom;
-          else if (catDef.group === 'Beban Tetap') monthlyData[key].bebanTetap += nom;
+          else if (catDef.group === 'COGS') monthlyData[key].bebanOp += nom;
+          else if (catDef.group === 'Fixed Cost') monthlyData[key].bebanTetap += nom;
         } else {
            // Fallback if category deleted from master data
            if (isPemasukan) monthlyData[key].pendapatan += nom;
