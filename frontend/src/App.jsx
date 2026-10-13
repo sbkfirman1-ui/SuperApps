@@ -27,10 +27,10 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<AppLayout />}>
-          <Route index element={<Dashboard category="General" />} />
+          <Route index element={<Dashboard key="General" category="General" />} />
           <Route path="job-laki" element={<JobLaki />} />
-          <Route path="dashboard/wedding" element={<Dashboard category="Wedding" />} />
-          <Route path="dashboard/studio" element={<Dashboard category="Studio" />} />
+          <Route path="dashboard/wedding" element={<Dashboard key="Wedding" category="Wedding" />} />
+          <Route path="dashboard/studio" element={<Dashboard key="Studio" category="Studio" />} />
           <Route path="dashboard/konsolidasi" element={<ConsolidateDashboard />} />
           <Route path="input" element={<InputTransaksi />} />
           <Route path="data/wedding" element={<Wedding />} />

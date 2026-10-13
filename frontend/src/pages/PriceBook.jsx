@@ -186,15 +186,15 @@ const PriceBook = ({ category }) => {
         </div>
         <table className="data-table" style={{ minWidth: '1000px', fontSize: '0.9rem' }}>
           <thead>
-            <tr style={{ background: 'var(--primary)' }}>
-              <th style={{ color: '#fff', borderRight: '1px solid var(--overlay-light)' }}>Nama Paket {category}</th>
-              <th style={{ color: '#fff', textAlign: 'right' }}>HPP</th>
-              <th style={{ color: '#fff', textAlign: 'right' }}>Harga Jual</th>
-              <th style={{ color: '#fff', textAlign: 'right', borderRight: '1px solid var(--overlay-light)' }}>Persentase HPP</th>
-              <th style={{ color: '#fff', textAlign: 'right' }}>Margin</th>
-              <th style={{ color: '#fff', textAlign: 'right', borderRight: '1px solid var(--overlay-light)' }}>Persentase Margin</th>
-              <th style={{ color: '#fff', textAlign: 'right' }}>Harga Coret</th>
-              <th style={{ color: '#fff', textAlign: 'center' }}>Diskon</th>
+            <tr>
+              <th style={{ background: 'var(--primary)', color: '#fff', borderRight: '1px solid var(--overlay-light)' }}>Nama Paket {category}</th>
+              <th style={{ background: 'var(--primary)', color: '#fff', textAlign: 'right' }}>HPP</th>
+              <th style={{ background: 'var(--primary)', color: '#fff', textAlign: 'right' }}>Harga Jual</th>
+              <th style={{ background: 'var(--primary)', color: '#fff', textAlign: 'right', borderRight: '1px solid var(--overlay-light)' }}>Persentase HPP</th>
+              <th style={{ background: 'var(--primary)', color: '#fff', textAlign: 'right' }}>Margin</th>
+              <th style={{ background: 'var(--primary)', color: '#fff', textAlign: 'right', borderRight: '1px solid var(--overlay-light)' }}>Persentase Margin</th>
+              <th style={{ background: 'var(--primary)', color: '#fff', textAlign: 'right' }}>Harga Coret</th>
+              <th style={{ background: 'var(--primary)', color: '#fff', textAlign: 'center' }}>Diskon</th>
             </tr>
           </thead>
           <tbody>
@@ -239,11 +239,11 @@ const PriceBook = ({ category }) => {
                         <td style={{ paddingLeft: '2.5rem', fontWeight: 'bold', color: 'var(--text-main)', borderRight: '1px solid var(--border-glass)' }}>{pkg.name}</td>
                         <td style={{ textAlign: 'right' }}>{formatRupiah(pkg.totalHpp)}</td>
                         <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatRupiah(pkg.hargaJual)}</td>
-                        <td style={{ textAlign: 'right', borderRight: '1px solid var(--border-glass)', color: pkg.hppPersen > 0.6 ? 'var(--text-danger)' : 'var(--text-success)', background: 'var(--overlay-bg)' }}>
+                        <td style={{ textAlign: 'right', borderRight: '1px solid var(--border-glass)', color: pkg.hppPersen <= 0.65 ? 'var(--text-success)' : pkg.hppPersen <= 0.75 ? 'var(--text-warning)' : 'var(--text-danger)', background: 'var(--overlay-bg)', fontWeight: 'bold' }}>
                           {formatPercent(pkg.hppPersen)}
                         </td>
                         <td style={{ textAlign: 'right', color: 'var(--text-primary)', fontWeight: 'bold' }}>{formatRupiah(pkg.margin)}</td>
-                        <td style={{ textAlign: 'right', borderRight: '1px solid var(--border-glass)', color: pkg.marginPersen < 0.4 ? 'var(--text-danger)' : 'var(--text-success)', background: 'var(--overlay-bg)' }}>
+                        <td style={{ textAlign: 'right', borderRight: '1px solid var(--border-glass)', color: pkg.marginPersen >= 0.35 ? 'var(--text-success)' : pkg.marginPersen >= 0.25 ? 'var(--text-warning)' : 'var(--text-danger)', background: 'var(--overlay-bg)', fontWeight: 'bold' }}>
                           {formatPercent(pkg.marginPersen)}
                         </td>
                         <td style={{ textAlign: 'right', textDecoration: 'line-through', color: 'var(--text-muted)' }}>{formatRupiah(roundedHargaCoret)}</td>

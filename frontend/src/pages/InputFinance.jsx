@@ -44,7 +44,7 @@ const SearchableSelect = ({ options, value, onChange, placeholder = "Pilih..." }
           position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, 
           marginTop: '0.5rem', maxHeight: '300px', display: 'flex', flexDirection: 'column',
           boxShadow: '0 10px 25px -5px var(--overlay-darker), 0 8px 10px -6px var(--overlay-darker)', 
-          background: '#16181d', /* Solid background for contrast */
+          background: 'var(--bg-secondary)', /* Responsive to theme */
           border: '1px solid var(--border-glass)',
           borderRadius: 'var(--radius-sm)'
         }}>

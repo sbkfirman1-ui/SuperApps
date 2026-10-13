@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Download, Trash2, Edit2, Check, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Download, Trash2, Edit2, Check, X, RotateCcw } from 'lucide-react';
 import { confirmDelete } from '../utils/swal';
 
 const formatRupiah = (number) => {
@@ -23,10 +23,36 @@ const TransactionTable = ({ category, data, onResetAll, onUpdateRow, onDeleteRow
 
   const uniqueProducts = [...new Set(data.map(item => item.produk))];
 
+  const storageKey = `tx_filter_${category}`;
+
+  useEffect(() => {
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setTempStartDate(parsed.activeStartDate || '');
+        setTempEndDate(parsed.activeEndDate || '');
+        setTempProduct(parsed.activeProduct || '');
+        
+        setActiveStartDate(parsed.activeStartDate || '');
+        setActiveEndDate(parsed.activeEndDate || '');
+        setActiveProduct(parsed.activeProduct || '');
+      } catch (e) {
+        console.error("Error parsing saved filters:", e);
+      }
+    }
+  }, [category, storageKey]);
+
   const handleApplyFilter = () => {
     setActiveStartDate(tempStartDate);
     setActiveEndDate(tempEndDate);
     setActiveProduct(tempProduct);
+
+    localStorage.setItem(storageKey, JSON.stringify({
+      activeStartDate: tempStartDate,
+      activeEndDate: tempEndDate,
+      activeProduct: tempProduct
+    }));
   };
 
   const handleResetFilter = () => {
@@ -36,6 +62,8 @@ const TransactionTable = ({ category, data, onResetAll, onUpdateRow, onDeleteRow
     setActiveStartDate('');
     setActiveEndDate('');
     setActiveProduct('');
+
+    localStorage.removeItem(storageKey);
   };
   
   const handleResetAllData = async () => {
@@ -153,8 +181,21 @@ const TransactionTable = ({ category, data, onResetAll, onUpdateRow, onDeleteRow
                 <button className="btn btn-primary" onClick={handleApplyFilter} style={{ padding: '0.5rem 1rem' }}>
                   Terapkan
                 </button>
-                <button className="btn" onClick={handleResetFilter} style={{ padding: '0.5rem 1rem', background: 'var(--overlay-border)', color: 'var(--text-main)' }}>
-                  Reset
+                <button 
+                  className="btn" 
+                  onClick={handleResetFilter} 
+                  style={{ 
+                    padding: '0.5rem 1rem', 
+                    background: (activeStartDate || activeEndDate || activeProduct) ? 'rgba(239, 68, 68, 0.15)' : 'var(--overlay-border)', 
+                    color: (activeStartDate || activeEndDate || activeProduct) ? '#ef4444' : 'var(--text-main)',
+                    border: (activeStartDate || activeEndDate || activeProduct) ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid var(--border-glass)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.35rem'
+                  }}
+                  title="Reset Filter"
+                >
+                  <RotateCcw size={14} /> Reset Filter
                 </button>
               </div>
             </div>

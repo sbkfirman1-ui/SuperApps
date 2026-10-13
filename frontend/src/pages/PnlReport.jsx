@@ -85,53 +85,6 @@ const PnlReport = ({ category }) => {
 
   const matrix = buildMatrix();
 
-  const renderGroup = (groupName) => {
-    let groupCats = financeCategories.filter(cat => cat.group === groupName);
-
-    // Khusus untuk Pendapatan, sembunyikan yang secara eksplisit milik divisi lain
-    if (groupName === 'Pendapatan') {
-      groupCats = groupCats.filter(cat => {
-        const lowerName = cat.name.toLowerCase();
-        if (category === 'Wedding' && lowerName.includes('studio')) return false;
-        if (category === 'Studio' && lowerName.includes('wedding')) return false;
-        return true;
-      });
-    }
-
-    if (groupCats.length === 0) return null;
-
-    const totals = Array(12).fill(0);
-    groupCats.forEach(cat => {
-      for (let i = 0; i < 12; i++) {
-        totals[i] += matrix[cat.name][i];
-      }
-    });
-
-    return (
-      <React.Fragment key={groupName}>
-        <tr>
-          <td colSpan={13} style={{ fontWeight: 'bold', background: 'var(--overlay-bg-hover)', paddingTop: '1.5rem', paddingBottom: '0.5rem', color: 'var(--text-main)' }}>
-            {groupName}
-          </td>
-        </tr>
-        {groupCats.map(cat => (
-          <tr key={cat.name}>
-            <td style={{ paddingLeft: '1.5rem', color: 'var(--text-muted)' }}>{cat.name}</td>
-            {matrix[cat.name].map((val, idx) => (
-              <td key={idx} style={{ textAlign: 'right' }}>{formatRupiah(val)}</td>
-            ))}
-          </tr>
-        ))}
-        <tr style={{ background: '#3b82f6', color: 'white', fontWeight: 'bold' }}>
-          <td>Total {groupName}</td>
-          {totals.map((val, idx) => (
-            <td key={idx} style={{ textAlign: 'right' }}>{formatRupiah(val)}</td>
-          ))}
-        </tr>
-      </React.Fragment>
-    );
-  };
-
   // Calculate totals
   const pendapatanTotals = Array(12).fill(0);
   const operasionalTotals = Array(12).fill(0);
@@ -166,6 +119,76 @@ const PnlReport = ({ category }) => {
     netMargin[i] = pendapatanTotals[i] > 0 ? (labaBersih[i] / pendapatanTotals[i]) * 100 : 0;
   }
 
+  const renderValueWithPercent = (val, monthIdx, isHeaderRow = false, customBase = null) => {
+    const base = customBase !== null ? customBase : pendapatanTotals[monthIdx];
+    const pct = base > 0 ? (val / base) * 100 : 0;
+    const showPct = val !== 0 && base > 0;
+    
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
+        <span>{formatRupiah(val)}</span>
+        {showPct && (
+          <span style={{ fontSize: '0.75rem', color: isHeaderRow ? 'rgba(255,255,255,0.8)' : 'var(--text-muted)' }}>
+            ({formatPercent(pct)})
+          </span>
+        )}
+      </div>
+    );
+  };
+
+  const renderGroup = (groupName) => {
+    let groupCats = financeCategories.filter(cat => cat.group === groupName);
+
+    // Khusus untuk Pendapatan, sembunyikan yang secara eksplisit milik divisi lain
+    if (groupName === 'Pendapatan') {
+      groupCats = groupCats.filter(cat => {
+        const lowerName = cat.name.toLowerCase();
+        if (category === 'Wedding' && lowerName.includes('studio')) return false;
+        if (category === 'Studio' && lowerName.includes('wedding')) return false;
+        return true;
+      });
+    }
+
+    if (groupCats.length === 0) return null;
+
+    const totals = Array(12).fill(0);
+    groupCats.forEach(cat => {
+      for (let i = 0; i < 12; i++) {
+        totals[i] += matrix[cat.name][i];
+      }
+    });
+
+    const useCOPBase = groupName === 'COGS' || groupName === 'Fixed Cost';
+
+    return (
+      <React.Fragment key={groupName}>
+        <tr>
+          <td colSpan={13} style={{ fontWeight: 'bold', background: 'var(--overlay-bg-hover)', paddingTop: '1.5rem', paddingBottom: '0.5rem', color: 'var(--text-main)' }}>
+            {groupName}
+          </td>
+        </tr>
+        {groupCats.map(cat => (
+          <tr key={cat.name}>
+            <td style={{ paddingLeft: '1.5rem', color: 'var(--text-muted)' }}>{cat.name}</td>
+            {matrix[cat.name].map((val, idx) => (
+              <td key={idx} style={{ textAlign: 'right', verticalAlign: 'middle' }}>
+                {renderValueWithPercent(val, idx, false, useCOPBase ? totalBeban[idx] : null)}
+              </td>
+            ))}
+          </tr>
+        ))}
+        <tr style={{ background: '#3b82f6', color: 'white', fontWeight: 'bold' }}>
+          <td>Total {groupName}</td>
+          {totals.map((val, idx) => (
+            <td key={idx} style={{ textAlign: 'right', verticalAlign: 'middle' }}>
+              {renderValueWithPercent(val, idx, true, useCOPBase ? totalBeban[idx] : null)}
+            </td>
+          ))}
+        </tr>
+      </React.Fragment>
+    );
+  };
+
   const getYearOptions = () => {
     const currentYear = new Date().getFullYear();
     return [currentYear - 1, currentYear, currentYear + 1];
@@ -176,7 +199,12 @@ const PnlReport = ({ category }) => {
     const header = ['Akun', ...MONTHS];
     rows.push(header);
 
-    const fmt = (val) => formatted ? formatRupiah(val) : val;
+    const fmt = (val, monthIdx, customBase = null) => {
+      if (!formatted) return val;
+      const base = customBase !== null ? customBase : pendapatanTotals[monthIdx];
+      const pctStr = (val !== 0 && base > 0) ? ` \n(${formatPercent((val / base) * 100)})` : '';
+      return `${formatRupiah(val)}${pctStr}`;
+    };
     const fmtPct = (val) => formatted ? formatPercent(val) : (val).toFixed(2) + '%';
 
     const addGroup = (groupName) => {
@@ -191,31 +219,33 @@ const PnlReport = ({ category }) => {
       }
       if (groupCats.length === 0) return;
 
+      const useCOPBase = groupName === 'COGS' || groupName === 'Fixed Cost';
+
       rows.push([groupName, ...Array(12).fill('')]);
       
       const totals = Array(12).fill(0);
       groupCats.forEach(cat => {
         const row = [cat.name];
         for (let i = 0; i < 12; i++) {
-          row.push(fmt(matrix[cat.name][i]));
+          row.push(fmt(matrix[cat.name][i], i, useCOPBase ? totalBeban[i] : null));
           totals[i] += matrix[cat.name][i];
         }
         rows.push(row);
       });
-      rows.push([`Total ${groupName}`, ...totals.map(fmt)]);
+      rows.push([`Total ${groupName}`, ...totals.map((v, i) => fmt(v, i, useCOPBase ? totalBeban[i] : null))]);
       rows.push(Array(13).fill('')); // Spacer
     };
 
     addGroup('Pendapatan');
     addGroup('COGS');
 
-    rows.push(['Gross Profit / Laba Kotor', ...grossProfit.map(fmt)]);
+    rows.push(['Gross Profit / Laba Kotor', ...grossProfit.map((v, i) => fmt(v, i))]);
     rows.push(Array(13).fill('')); // Spacer
 
     addGroup('Fixed Cost');
 
-    rows.push(['Total Beban', ...totalBeban.map(fmt)]);
-    rows.push(['Net Profit / Laba Bersih', ...labaBersih.map(fmt)]);
+    rows.push(['Total Cost of Production (COP)', ...totalBeban.map((v, i) => fmt(v, i, totalBeban[i]))]);
+    rows.push(['Net Profit / Laba Bersih', ...labaBersih.map((v, i) => fmt(v, i))]);
     rows.push(['Net Margin', ...netMargin.map(fmtPct)]);
 
     return rows;
@@ -304,7 +334,9 @@ const PnlReport = ({ category }) => {
               <tr style={{ background: '#f59e0b', color: 'white', fontWeight: 'bold' }}>
                 <td>Gross Profit / Laba Kotor</td>
                 {grossProfit.map((val, idx) => (
-                  <td key={idx} style={{ textAlign: 'right' }}>{formatRupiah(val)}</td>
+                  <td key={idx} style={{ textAlign: 'right', verticalAlign: 'middle' }}>
+                    {renderValueWithPercent(val, idx, true)}
+                  </td>
                 ))}
               </tr>
 
@@ -318,15 +350,19 @@ const PnlReport = ({ category }) => {
 
               {/* Final Totals */}
               <tr style={{ background: 'var(--overlay-bg-hover)', fontWeight: 'bold' }}>
-                <td style={{ color: 'var(--text-main)' }}>Total Beban</td>
+                <td style={{ color: 'var(--text-main)' }}>Total Cost of Production (COP)</td>
                 {totalBeban.map((val, idx) => (
-                  <td key={idx} style={{ textAlign: 'right', color: 'var(--text-main)' }}>{formatRupiah(val)}</td>
+                  <td key={idx} style={{ textAlign: 'right', verticalAlign: 'middle', color: 'var(--text-main)' }}>
+                    {renderValueWithPercent(val, idx, false, totalBeban[idx])}
+                  </td>
                 ))}
               </tr>
               <tr style={{ background: '#22c55e', color: 'white', fontWeight: 'bold' }}>
                 <td>Net Profit / Laba Bersih</td>
                 {labaBersih.map((val, idx) => (
-                  <td key={idx} style={{ textAlign: 'right' }}>{formatRupiah(val)}</td>
+                  <td key={idx} style={{ textAlign: 'right', verticalAlign: 'middle' }}>
+                    {renderValueWithPercent(val, idx, true)}
+                  </td>
                 ))}
               </tr>
               <tr style={{ background: '#3b82f6', color: 'white', fontWeight: 'bold' }}>

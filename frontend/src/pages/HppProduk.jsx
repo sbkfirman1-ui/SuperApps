@@ -450,9 +450,9 @@ const HppProduk = ({ category }) => {
 
                             <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', fontWeight: 'bold' }}>{formatRupiah(summary.totalHpp)}</td>
                             <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', fontWeight: 'bold' }}>{formatRupiah(pkg.hargaJual)}</td>
-                            <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', color: summary.hppPersen > 0.6 ? 'var(--text-danger)' : 'var(--text-success)' }}>{formatPercent(summary.hppPersen)}</td>
+                            <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', color: summary.hppPersen <= 0.65 ? 'var(--text-success)' : summary.hppPersen <= 0.75 ? '#fbbf24' : 'var(--text-danger)' }}>{formatPercent(summary.hppPersen)}</td>
                             <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', fontWeight: 'bold', color: 'var(--text-primary)' }}>{formatRupiah(summary.margin)}</td>
-                            <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', color: summary.marginPersen < 0.4 ? 'var(--text-danger)' : 'var(--text-success)' }}>{formatPercent(summary.marginPersen)}</td>
+                            <td rowSpan={rowCount + 1} style={{ verticalAlign: 'top', textAlign: 'right', color: summary.marginPersen >= 0.35 ? 'var(--text-success)' : summary.marginPersen >= 0.25 ? '#fbbf24' : 'var(--text-danger)' }}>{formatPercent(summary.marginPersen)}</td>
                             {pkg.items.length > 0 ? (
                               <td style={{ textAlign: 'center' }}>
                                 <button className="btn" onClick={() => handleDeleteItem(pkg.items[0].id)} style={{ padding: '0.3rem', color: 'var(--text-danger)', background: 'transparent' }}><X size={14} /></button>

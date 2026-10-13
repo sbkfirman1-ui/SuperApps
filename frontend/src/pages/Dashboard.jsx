@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Loader from '../components/Loader';
 import { 
   DollarSign, ShoppingCart, CreditCard, TrendingUp,
-  PieChart as PieChartIcon, CheckCircle, Clock, XCircle, Calendar, Filter, X
+  PieChart as PieChartIcon, CheckCircle, Clock, XCircle, Calendar, Filter, X, RotateCcw
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -19,11 +19,43 @@ const formatRupiah = (number) => {
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
+const getSavedFilter = (cat) => {
+  try {
+    const saved = localStorage.getItem(`dashboard_filter_${cat}`);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.startDate && parsed.endDate && parsed.isFilterApplied) {
+        return {
+          startDate: parsed.startDate,
+          endDate: parsed.endDate,
+          isFilterApplied: true
+        };
+      }
+    }
+  } catch (e) {
+    console.error("Error reading saved dashboard filter:", e);
+  }
+  return { startDate: '', endDate: '', isFilterApplied: false };
+};
+
 const Dashboard = ({ category }) => {
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [isFilterApplied, setIsFilterApplied] = useState(false);
+  const storageKey = `dashboard_filter_${category}`;
+
+  const [startDate, setStartDate] = useState(() => getSavedFilter(category).startDate);
+  const [endDate, setEndDate] = useState(() => getSavedFilter(category).endDate);
+  const [isFilterApplied, setIsFilterApplied] = useState(() => getSavedFilter(category).isFilterApplied);
+  const [appliedStartDate, setAppliedStartDate] = useState(() => getSavedFilter(category).startDate);
+  const [appliedEndDate, setAppliedEndDate] = useState(() => getSavedFilter(category).endDate);
   const [filterTrigger, setFilterTrigger] = useState(0);
+
+  useEffect(() => {
+    const saved = getSavedFilter(category);
+    setStartDate(saved.startDate);
+    setEndDate(saved.endDate);
+    setIsFilterApplied(saved.isFilterApplied);
+    setAppliedStartDate(saved.startDate);
+    setAppliedEndDate(saved.endDate);
+  }, [category]);
 
   const [stats, setStats] = useState({
     totalPendapatan: 0, totalTransaksi: 0, piutangBerjalan: 0,
@@ -31,15 +63,17 @@ const Dashboard = ({ category }) => {
     dpCount: 0, dpValue: 0, dpTx: [],
     belumLunasCount: 0, belumLunasValue: 0, belumLunasTx: [],
     topProducts: [], topRevenueProducts: [], dataSales: [],
-    cashFlowSaldo: 0
+    cashFlowSaldo: 0,
+    labaBersihTotal: 0, netMarginTotal: 0
   });
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState({ isOpen: false, title: '', data: [] });
+  const [financeCategories, setFinanceCategories] = useState([]);
 
   const openModal = (title, data) => setModal({ isOpen: true, title, data });
   const closeModal = () => setModal({ ...modal, isOpen: false });
 
-  const financeCategories = getMasterData('financeCategories', DEFAULT_FINANCE_CATEGORIES);
+
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -53,14 +87,30 @@ const Dashboard = ({ category }) => {
       if (category === 'Wedding') queryFin = queryFin.eq('category', 'Wedding');
       else if (category === 'Studio') queryFin = queryFin.eq('category', 'Studio');
 
-      if (isFilterApplied && startDate && endDate) {
-        queryTx = queryTx.gte('dDayDate', startDate).lte('dDayDate', endDate);
-        queryFin = queryFin.gte('tanggal', startDate).lte('tanggal', endDate);
+      if (isFilterApplied && appliedStartDate && appliedEndDate) {
+        queryTx = queryTx.gte('dDayDate', appliedStartDate).lte('dDayDate', appliedEndDate);
+        queryFin = queryFin.gte('tanggal', appliedStartDate).lte('tanggal', appliedEndDate);
       }
 
-      const [txRes, finRes] = await Promise.all([queryTx, queryFin]);
+      let queryCats = supabase.from('finance_categories').select('*').order('id', { ascending: true });
+
+      const [txRes, finRes, catRes] = await Promise.all([queryTx, queryFin, queryCats]);
       const transactions = txRes.data || [];
       const financeData = finRes.data || [];
+      const cats = catRes.data || [];
+
+      let baseCats = cats || [];
+      financeData.forEach(item => {
+        if (!baseCats.find(c => c.name === item.kategoriFinance)) {
+          baseCats.push({
+            id: `dyn_${Math.random()}`,
+            name: item.kategoriFinance,
+            type: item.jenis,
+            group: item.jenis === 'Pemasukan' ? 'Pendapatan' : 'COGS'
+          });
+        }
+      });
+      setFinanceCategories([...baseCats]);
 
       // Calculate Transaction Stats
       let tPend = 0, piutang = 0;
@@ -144,11 +194,12 @@ const Dashboard = ({ category }) => {
       let totalPengeluaran = 0;
       let totalTransfer = 0;
       let totalCash = 0;
+      let totalTransferOut = 0;
+      let totalCashOut = 0;
       
       let totalPendapatanFinance = 0;
       let totalBebanOpFinance = 0;
       let totalBebanTetapFinance = 0;
-
       const monthlyData = {}; // { 'YYYY-MM': { pendapatan: 0, bebanOp: 0, bebanTetap: 0 } }
 
       financeData.forEach(f => {
@@ -160,24 +211,34 @@ const Dashboard = ({ category }) => {
 
         // Breakdown Transfer/Cash
         const ket = f.keterangan || '';
+        const isPengeluaran = f.jenis === 'Pengeluaran';
+        
         if (ket.startsWith('[Cash] ')) {
-          if (isPemasukan) totalCash += nom; else totalCash -= nom;
+          if (isPemasukan) totalCash += nom;
+          if (isPengeluaran) totalCashOut += nom;
         } else {
           // Default to transfer for older records and explicitly marked ones
-          if (isPemasukan) totalTransfer += nom; else totalTransfer -= nom;
+          if (isPemasukan) totalTransfer += nom;
+          if (isPengeluaran) totalTransferOut += nom;
         }
-
-        const catDef = financeCategories.find(c => c.name === f.kategoriFinance);
+        const catDef = baseCats.find(c => c.name === f.kategoriFinance);
+        let group = '';
         if (catDef) {
-          if (catDef.group === 'Pendapatan') totalPendapatanFinance += nom;
-          else if (catDef.group === 'COGS') totalBebanOpFinance += nom;
-          else if (catDef.group === 'Fixed Cost') totalBebanTetapFinance += nom;
+          group = catDef.group;
         } else {
-           // Fallback
-           if (isPemasukan) totalPendapatanFinance += nom;
-           else totalBebanOpFinance += nom;
+          group = isPemasukan ? 'Pendapatan' : 'COGS';
         }
 
+        let includePendapatan = true;
+        if (group === 'Pendapatan') {
+           const lowerName = f.kategoriFinance.toLowerCase();
+           if (category === 'Wedding' && lowerName.includes('studio')) includePendapatan = false;
+           if (category === 'Studio' && lowerName.includes('wedding')) includePendapatan = false;
+        }
+
+        if (group === 'Pendapatan' && includePendapatan) totalPendapatanFinance += nom;
+        else if (group === 'COGS') totalBebanOpFinance += nom;
+        else if (group === 'Fixed Cost') totalBebanTetapFinance += nom;
         // For Laba Bersih Chart
         const date = new Date(f.tanggal);
         const yyyy = date.getFullYear();
@@ -191,15 +252,9 @@ const Dashboard = ({ category }) => {
         if (isPemasukan) monthlyData[key].pemasukan += nom;
         if (f.jenis === 'Pengeluaran') monthlyData[key].pengeluaran += nom;
 
-        if (catDef) {
-          if (catDef.group === 'Pendapatan') monthlyData[key].pendapatan += nom;
-          else if (catDef.group === 'COGS') monthlyData[key].bebanOp += nom;
-          else if (catDef.group === 'Fixed Cost') monthlyData[key].bebanTetap += nom;
-        } else {
-           // Fallback if category deleted from master data
-           if (isPemasukan) monthlyData[key].pendapatan += nom;
-           else monthlyData[key].bebanOp += nom;
-        }
+        if (group === 'Pendapatan' && includePendapatan) monthlyData[key].pendapatan += nom;
+        else if (group === 'COGS') monthlyData[key].bebanOp += nom;
+        else if (group === 'Fixed Cost') monthlyData[key].bebanTetap += nom;
       });
 
       // Cash flow sisa saldo
@@ -236,40 +291,74 @@ const Dashboard = ({ category }) => {
         dataTransaksiKurva: chartTxData,
         dataSales: chartData,
         cashFlowSaldo,
+        labaBersihTotal,
+        netMarginTotal,
         totalTransfer,
         totalCash,
+        totalTransferOut,
+        totalCashOut,
         totalPemasukan,
-        totalPengeluaran,
-        labaBersihTotal,
-        netMarginTotal
+        totalPengeluaran
       });
       setLoading(false);
     };
     fetchStats();
-  }, [category, filterTrigger]); // ONLY run when category or filterTrigger changes
+  }, [category, filterTrigger, isFilterApplied, appliedStartDate, appliedEndDate]);
 
   const handleApplyFilter = () => {
     if (startDate && endDate) {
+      if (startDate > endDate) {
+        alert('Tanggal mulai tidak boleh lebih besar dari tanggal sampai!');
+        return;
+      }
       setIsFilterApplied(true);
+      setAppliedStartDate(startDate);
+      setAppliedEndDate(endDate);
+      localStorage.setItem(storageKey, JSON.stringify({
+        startDate,
+        endDate,
+        isFilterApplied: true
+      }));
       setFilterTrigger(prev => prev + 1);
     }
   };
 
-  const handleClearFilter = () => {
+  const handleResetFilter = () => {
     setStartDate('');
     setEndDate('');
     setIsFilterApplied(false);
+    setAppliedStartDate('');
+    setAppliedEndDate('');
+    localStorage.removeItem(storageKey);
     setFilterTrigger(prev => prev + 1);
   };
 
   const COLORS = ['var(--text-primary)', 'var(--text-success)', 'var(--text-warning)', 'var(--text-danger)', '#a78bfa'];
-  const { totalPendapatan, totalTransaksi, piutangBerjalan, lunasCount, lunasValue, lunasTx, dpCount, dpValue, dpTx, belumLunasCount, belumLunasValue, belumLunasTx, topProducts, topRevenueProducts, dataTransaksiKurva, dataSales, cashFlowSaldo, totalTransfer, totalCash, totalPemasukan, totalPengeluaran, labaBersihTotal, netMarginTotal } = stats;
+  const { totalPendapatan, totalTransaksi, piutangBerjalan, lunasCount, lunasValue, lunasTx, dpCount, dpValue, dpTx, belumLunasCount, belumLunasValue, belumLunasTx, topProducts, topRevenueProducts, dataTransaksiKurva, dataSales, cashFlowSaldo, totalTransfer, totalCash, totalTransferOut, totalCashOut, totalPemasukan, totalPengeluaran, labaBersihTotal, netMarginTotal } = stats;
 
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '4rem' }}>
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 className="page-title">Dashboard {category}</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <h1 className="page-title" style={{ margin: 0 }}>Dashboard {category}</h1>
+            {isFilterApplied && appliedStartDate && appliedEndDate && (
+              <span style={{ 
+                fontSize: '0.75rem', 
+                fontWeight: 600, 
+                padding: '0.2rem 0.65rem', 
+                borderRadius: '9999px', 
+                backgroundColor: 'rgba(14, 165, 233, 0.12)', 
+                color: '#38bdf8', 
+                border: '1px solid rgba(56, 189, 248, 0.3)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem'
+              }}>
+                <Filter size={12} /> Filter Aktif: {appliedStartDate} s/d {appliedEndDate}
+              </span>
+            )}
+          </div>
           <p className="page-subtitle">Ringkasan performa bisnis dan penjualan</p>
         </div>
         
@@ -277,21 +366,59 @@ const Dashboard = ({ category }) => {
         <div className="glass-panel" style={{ padding: '1rem', display: 'flex', alignItems: 'flex-end', gap: '1rem', flexWrap: 'wrap' }}>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Mulai (Tgl Acara)</label>
-            <input type="date" className="form-control" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ padding: '0.4rem', fontSize: '0.9rem' }} />
+            <input 
+              type="date" 
+              className="form-control" 
+              value={startDate} 
+              onChange={e => setStartDate(e.target.value)} 
+              style={{ padding: '0.4rem', fontSize: '0.9rem' }} 
+            />
           </div>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label className="form-label" style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Sampai (Tgl Acara)</label>
-            <input type="date" className="form-control" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ padding: '0.4rem', fontSize: '0.9rem' }} />
+            <input 
+              type="date" 
+              className="form-control" 
+              value={endDate} 
+              onChange={e => setEndDate(e.target.value)} 
+              style={{ padding: '0.4rem', fontSize: '0.9rem' }} 
+            />
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="btn btn-primary" onClick={handleApplyFilter} disabled={!startDate || !endDate} style={{ padding: '0.4rem 1rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <button 
+              className="btn btn-primary" 
+              onClick={handleApplyFilter} 
+              disabled={!startDate || !endDate} 
+              style={{ padding: '0.4rem 1rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+            >
               <Filter size={14} /> Terapkan
             </button>
-            {isFilterApplied && (
-              <button className="btn" onClick={handleClearFilter} style={{ padding: '0.4rem 1rem', background: 'var(--danger-bg)', color: 'var(--text-danger)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <X size={14} /> Hapus
-              </button>
-            )}
+            <button 
+              className="btn" 
+              onClick={handleResetFilter} 
+              disabled={!isFilterApplied && !startDate && !endDate}
+              style={{ 
+                padding: '0.4rem 1rem', 
+                background: isFilterApplied 
+                  ? 'rgba(239, 68, 68, 0.15)' 
+                  : (startDate || endDate ? 'var(--overlay-border)' : 'transparent'),
+                color: isFilterApplied 
+                  ? '#ef4444' 
+                  : (startDate || endDate ? 'var(--text-main)' : 'var(--text-muted)'),
+                border: isFilterApplied 
+                  ? '1px solid rgba(239, 68, 68, 0.3)' 
+                  : '1px solid var(--border-glass)',
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.35rem',
+                cursor: (!isFilterApplied && !startDate && !endDate) ? 'not-allowed' : 'pointer',
+                opacity: (!isFilterApplied && !startDate && !endDate) ? 0.5 : 1,
+                transition: 'all 0.2s ease'
+              }}
+              title="Reset Filter"
+            >
+              <RotateCcw size={14} /> Reset Filter
+            </button>
           </div>
         </div>
       </div>
@@ -309,11 +436,11 @@ const Dashboard = ({ category }) => {
               
               <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.15s' }}>
                 <div className="summary-title">Net Margin</div>
-                <div className="summary-value" style={{ fontSize: '1.4rem', color: netMarginTotal >= 15 ? 'var(--text-success)' : 'var(--text-danger)' }}>
-                  {formatRupiah(labaBersihTotal)} ({netMarginTotal.toFixed(1)}%)
+                <div className="summary-value" style={{ fontSize: '1.4rem', color: (netMarginTotal || 0) >= 15 ? 'var(--text-success)' : 'var(--text-danger)' }}>
+                  {formatRupiah(labaBersihTotal)} ({(netMarginTotal || 0).toFixed(1)}%)
                 </div>
-                <div className="summary-change" style={{ color: netMarginTotal >= 15 ? 'var(--text-success)' : 'var(--text-danger)' }}>
-                  <TrendingUp size={16} style={{ transform: netMarginTotal < 15 ? 'scaleY(-1)' : 'none' }} /> 
+                <div className="summary-change" style={{ color: (netMarginTotal || 0) >= 15 ? 'var(--text-success)' : 'var(--text-danger)' }}>
+                  <TrendingUp size={16} style={{ transform: (netMarginTotal || 0) < 15 ? 'scaleY(-1)' : 'none' }} /> 
                   Target 15%
                 </div>
                 <PieChartIcon className="summary-card-icon" size={32} style={{ opacity: 0.2 }} />
@@ -354,25 +481,49 @@ const Dashboard = ({ category }) => {
               </div>
 
               <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.35s' }}>
-                <div className="summary-title">Total Uang Transfer</div>
+                <div className="summary-title">Total Uang Transfer (Pemasukan)</div>
                 <div className="summary-value" style={{ fontSize: '1.75rem', color: totalTransfer >= 0 ? '#3b82f6' : 'var(--text-danger)' }}>
                   {formatRupiah(totalTransfer)}
                 </div>
                 <div className="summary-change" style={{ color: totalTransfer >= 0 ? '#3b82f6' : 'var(--text-danger)' }}>
                   <TrendingUp size={16} style={{ transform: totalTransfer < 0 ? 'scaleY(-1)' : 'none' }} /> 
-                  Saldo Transfer
+                  Pemasukan Transfer
                 </div>
                 <CreditCard className="summary-card-icon" size={32} style={{ opacity: 0.2 }} />
               </div>
 
               <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.4s' }}>
-                <div className="summary-title">Total Uang Cash</div>
+                <div className="summary-title">Total Uang Cash (Pemasukan)</div>
                 <div className="summary-value" style={{ fontSize: '1.75rem', color: totalCash >= 0 ? '#10b981' : 'var(--text-danger)' }}>
                   {formatRupiah(totalCash)}
                 </div>
                 <div className="summary-change" style={{ color: totalCash >= 0 ? '#10b981' : 'var(--text-danger)' }}>
                   <TrendingUp size={16} style={{ transform: totalCash < 0 ? 'scaleY(-1)' : 'none' }} /> 
-                  Saldo Tunai
+                  Pemasukan Tunai
+                </div>
+                <DollarSign className="summary-card-icon" size={32} style={{ opacity: 0.2 }} />
+              </div>
+
+              <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.45s' }}>
+                <div className="summary-title">Total Uang Transfer (Pengeluaran)</div>
+                <div className="summary-value" style={{ fontSize: '1.75rem', color: 'var(--text-danger)' }}>
+                  {formatRupiah(totalTransferOut)}
+                </div>
+                <div className="summary-change change-negative">
+                  <TrendingUp size={16} style={{ transform: 'scaleY(-1)' }} /> 
+                  Pengeluaran Transfer
+                </div>
+                <CreditCard className="summary-card-icon" size={32} style={{ opacity: 0.2 }} />
+              </div>
+
+              <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.5s' }}>
+                <div className="summary-title">Total Uang Cash (Pengeluaran)</div>
+                <div className="summary-value" style={{ fontSize: '1.75rem', color: 'var(--text-danger)' }}>
+                  {formatRupiah(totalCashOut)}
+                </div>
+                <div className="summary-change change-negative">
+                  <TrendingUp size={16} style={{ transform: 'scaleY(-1)' }} /> 
+                  Pengeluaran Tunai
                 </div>
                 <DollarSign className="summary-card-icon" size={32} style={{ opacity: 0.2 }} />
               </div>
@@ -432,7 +583,7 @@ const Dashboard = ({ category }) => {
               <div className="chart-header"><TrendingUp size={20} className="text-primary" /> Kurva Tren Pendapatan (Berdasarkan Transaksi)</div>
               <div style={{ width: '100%', height: 350 }}>
                 <ResponsiveContainer>
-                  <AreaChart data={dataTransaksiKurva || []} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <AreaChart data={dataTransaksiKurva || []} margin={{ top: 10, right: 30, left: 20, bottom: 5 }}>
                     <defs>
                       <linearGradient id="colorPendapatan" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="var(--text-primary)" stopOpacity={0.8} />
@@ -440,7 +591,7 @@ const Dashboard = ({ category }) => {
                       </linearGradient>
                     </defs>
                     <XAxis dataKey="name" stroke="var(--text-muted)" />
-                    <YAxis stroke="var(--text-muted)" tickFormatter={(v) => `Rp${(v / 1000000).toFixed(1)}M`} />
+                    <YAxis stroke="var(--text-muted)" width={70} tickFormatter={(v) => `Rp${(v / 1000000).toFixed(1)}M`} />
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--overlay-border)" />
                     <Tooltip
                       contentStyle={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', borderRadius: 'var(--radius-sm)' }}
@@ -462,9 +613,9 @@ const Dashboard = ({ category }) => {
             <div className="chart-header"><TrendingUp size={20} className="text-primary" /> Arus Kas (Pemasukan vs Pengeluaran)</div>
             <div style={{ width: '100%', height: 350 }}>
               <ResponsiveContainer>
-                <LineChart data={dataSales} margin={{ top: 10, right: 30, left: 0, bottom: 10 }}>
+                <LineChart data={dataSales} margin={{ top: 10, right: 30, left: 20, bottom: 10 }}>
                   <XAxis dataKey="name" stroke="var(--text-muted)" />
-                  <YAxis stroke="var(--text-muted)" tickFormatter={(v) => `Rp${(v / 1000000).toFixed(1)}M`} />
+                  <YAxis stroke="var(--text-muted)" width={70} tickFormatter={(v) => `Rp${(v / 1000000).toFixed(1)}M`} />
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--overlay-border)" />
                   <Tooltip
                     contentStyle={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', borderRadius: 'var(--radius-sm)' }}
@@ -484,7 +635,7 @@ const Dashboard = ({ category }) => {
               <div className="chart-header"><TrendingUp size={20} className="text-primary" /> Growth Sales (Net Profit / Laba Bersih)</div>
               <div style={{ width: '100%', height: 380 }}>
                 <ResponsiveContainer>
-                  <AreaChart data={dataSales} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <AreaChart data={dataSales} margin={{ top: 10, right: 30, left: 20, bottom: 5 }}>
                     <defs>
                       <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.8} />
@@ -492,7 +643,7 @@ const Dashboard = ({ category }) => {
                       </linearGradient>
                     </defs>
                     <XAxis dataKey="name" stroke="var(--text-muted)" />
-                    <YAxis stroke="var(--text-muted)" tickFormatter={(v) => `Rp${(v / 1000000).toFixed(1)}M`} />
+                    <YAxis stroke="var(--text-muted)" width={70} tickFormatter={(v) => `Rp${(v / 1000000).toFixed(1)}M`} />
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <Tooltip
                       contentStyle={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-glass)', borderRadius: 'var(--radius-sm)' }}

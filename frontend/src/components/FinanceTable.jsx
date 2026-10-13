@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Download, Trash2, Edit2, Check, X } from 'lucide-react';
 import { confirmDelete } from '../utils/swal';
 
@@ -11,10 +11,12 @@ const FinanceTable = ({ category, data, financeCategories = [], onResetAll, onDe
   const [tempStartDate, setTempStartDate] = useState('');
   const [tempEndDate, setTempEndDate] = useState('');
   const [tempPayment, setTempPayment] = useState('');
+  const [tempType, setTempType] = useState('');
 
   const [activeStartDate, setActiveStartDate] = useState('');
   const [activeEndDate, setActiveEndDate] = useState('');
   const [activePayment, setActivePayment] = useState('');
+  const [activeType, setActiveType] = useState('');
 
   const [editId, setEditId] = useState(null);
   const [editForm, setEditForm] = useState({
@@ -49,19 +51,53 @@ const FinanceTable = ({ category, data, financeCategories = [], onResetAll, onDe
     setEditId(null);
   };
 
+  const storageKey = `finance_filter_${category}`;
+
+  useEffect(() => {
+    const saved = localStorage.getItem(storageKey);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setTempStartDate(parsed.activeStartDate || '');
+        setTempEndDate(parsed.activeEndDate || '');
+        setTempPayment(parsed.activePayment || '');
+        setTempType(parsed.activeType || '');
+        
+        setActiveStartDate(parsed.activeStartDate || '');
+        setActiveEndDate(parsed.activeEndDate || '');
+        setActivePayment(parsed.activePayment || '');
+        setActiveType(parsed.activeType || '');
+      } catch (e) {
+        console.error("Error parsing saved filters:", e);
+      }
+    }
+  }, [category, storageKey]);
+
   const handleApplyFilter = () => {
     setActiveStartDate(tempStartDate);
     setActiveEndDate(tempEndDate);
     setActivePayment(tempPayment);
+    setActiveType(tempType);
+
+    localStorage.setItem(storageKey, JSON.stringify({
+      activeStartDate: tempStartDate,
+      activeEndDate: tempEndDate,
+      activePayment: tempPayment,
+      activeType: tempType
+    }));
   };
 
   const handleResetFilter = () => {
     setTempStartDate('');
     setTempEndDate('');
     setTempPayment('');
+    setTempType('');
     setActiveStartDate('');
     setActiveEndDate('');
     setActivePayment('');
+    setActiveType('');
+
+    localStorage.removeItem(storageKey);
   };
   
   const handleResetAllData = async () => {
@@ -79,6 +115,9 @@ const FinanceTable = ({ category, data, financeCategories = [], onResetAll, onDe
       if (rowDate < start || rowDate > end) matches = false;
     }
     if (activePayment && row.jenisPembayaran !== activePayment) {
+      matches = false;
+    }
+    if (activeType && row.kategori !== activeType) {
       matches = false;
     }
     return matches;
@@ -136,8 +175,17 @@ const FinanceTable = ({ category, data, financeCategories = [], onResetAll, onDe
               </div>
               
               <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.85rem' }}>Arus Kas</label>
+                <select className="form-control" style={{ padding: '0.5rem', width: '130px' }} value={tempType} onChange={(e) => setTempType(e.target.value)}>
+                  <option value="">Semua</option>
+                  <option value="Pemasukan">Pemasukan</option>
+                  <option value="Pengeluaran">Pengeluaran</option>
+                </select>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label" style={{ fontSize: '0.85rem' }}>Jenis Pembayaran</label>
-                <select className="form-control" style={{ padding: '0.5rem', width: '150px' }} value={tempPayment} onChange={(e) => setTempPayment(e.target.value)}>
+                <select className="form-control" style={{ padding: '0.5rem', width: '130px' }} value={tempPayment} onChange={(e) => setTempPayment(e.target.value)}>
                   <option value="">Semua</option>
                   <option value="Transfer">Transfer</option>
                   <option value="Cash">Cash</option>
