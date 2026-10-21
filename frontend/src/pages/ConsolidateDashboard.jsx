@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Loader from '../components/Loader';
 import { supabase } from '../lib/supabase';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { TrendingUp, DollarSign, Activity, Scale, Wallet } from 'lucide-react';
+import { TrendingUp, DollarSign, Activity, Scale, Wallet, ShoppingCart } from 'lucide-react';
 import { getMasterData, DEFAULT_FINANCE_CATEGORIES } from '../utils/masterData';
 
 const formatRupiah = (number) => {
@@ -55,6 +55,12 @@ const ConsolidateDashboard = () => {
     wedding: { grossProfit: 0, netProfit: 0, netMargin: 0, cashFlow: 0, totalPendapatan: 0 },
     studio: { grossProfit: 0, netProfit: 0, netMargin: 0, cashFlow: 0, totalPendapatan: 0 }
   });
+  const [omzetTx, setOmzetTx] = useState({
+    wedding: 0,
+    studio: 0,
+    laki: 0,
+    total: 0
+  });
   const [trendData, setTrendData] = useState([]);
 
   const getYearOptions = () => {
@@ -74,14 +80,13 @@ const ConsolidateDashboard = () => {
     const fetchData = async () => {
       setLoading(true);
       
-
-      
       const startOfYear = `${year}-01-01`;
       const endOfYear = `${year}-12-31`;
 
-      const [{ data: cats }, { data: financeData, error }] = await Promise.all([
+      const [{ data: cats }, { data: financeData, error }, { data: txData }] = await Promise.all([
         supabase.from('finance_categories').select('*').order('id', { ascending: true }),
-        supabase.from('finance').select('*').gte('tanggal', startOfYear).lte('tanggal', endOfYear)
+        supabase.from('finance').select('*').gte('tanggal', startOfYear).lte('tanggal', endOfYear),
+        supabase.from('transactions').select('*')
       ]);
 
       if (!error && financeData) {
@@ -215,6 +220,35 @@ const ConsolidateDashboard = () => {
 
         setTrendData(monthlyTrend);
       }
+
+      if (txData) {
+        let txWed = 0;
+        let txStu = 0;
+        let txLak = 0;
+
+        txData.filter(t => {
+          const dateStr = t.dDayDate || t.bookingDate || t.created_at;
+          if (!dateStr) return false;
+          const d = new Date(dateStr);
+          if (isNaN(d.getTime())) return false;
+          if (d.getFullYear() !== year) return false;
+          if (month !== 'Semua' && d.getMonth() !== Number(month)) return false;
+          return true;
+        }).forEach(t => {
+          const price = Number(t.productPrice) || 0;
+          if (t.category === 'Wedding') txWed += price;
+          else if (t.category === 'Studio') txStu += price;
+          else if (t.category === 'Laki') txLak += price;
+        });
+
+        setOmzetTx({
+          wedding: txWed,
+          studio: txStu,
+          laki: txLak,
+          total: txWed + txStu + txLak
+        });
+      }
+
       setLoading(false);
     };
     
@@ -253,7 +287,7 @@ const ConsolidateDashboard = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <label style={{ fontWeight: 600 }}>Bulan</label>
-            <select className="form-control" style={{ width: '120px' }} value={month} onChange={e => setMonth(e.target.value)}>
+            <select className="form-control" style={{ minWidth: '150px', width: 'auto' }} value={month} onChange={e => setMonth(e.target.value)}>
               <option value="Semua">Semua</option>
               {MONTHS.map((m, i) => (
                 <option key={m} value={i}>{m}</option>
@@ -262,7 +296,7 @@ const ConsolidateDashboard = () => {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <label style={{ fontWeight: 600 }}>Tahun</label>
-            <select className="form-control" style={{ width: '100px' }} value={year} onChange={e => setYear(Number(e.target.value))}>
+            <select className="form-control" style={{ minWidth: '105px', width: 'auto' }} value={year} onChange={e => setYear(Number(e.target.value))}>
               {getYearOptions().map(y => (
                 <option key={y} value={y}>{y}</option>
               ))}
@@ -275,133 +309,178 @@ const ConsolidateDashboard = () => {
         <Loader text="Memuat data konsolidasi..." />
       ) : (
         <>
-          <div className="summary-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', marginBottom: '2rem' }}>
-            {/* TOTAL REVENUE */}
+          <div className="consolidate-summary-grid">
+            {/* OMZET JOB LAKI */}
             <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.0s' }}>
-              <div className="summary-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><DollarSign size={18}/> Total Revenue</div>
+              <div className="summary-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <ShoppingCart size={18}/> Omzet Job Laki
+              </div>
               <div style={{ marginTop: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Wedding</span>
+                {omzetTx.laki > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem', gap: '1rem' }}>
+                    <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Laki</span>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontWeight: 'bold', color: '#f59e0b', whiteSpace: 'nowrap' }}>{formatRupiah(omzetTx.laki)}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#f59e0b', opacity: 0.8, marginTop: '2px', whiteSpace: 'nowrap' }}>
+                        {formatPercent(omzetTx.total ? (omzetTx.laki / omzetTx.total) * 100 : 0)}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem', gap: '1rem' }}>
+                  <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Wedding</span>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{formatRupiah(stats.wedding.totalPendapatan)}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--primary)', opacity: 0.8, marginTop: '2px' }}>{formatPercent(totalPendapatanAll ? (stats.wedding.totalPendapatan / totalPendapatanAll) * 100 : 0)}</div>
+                    <div style={{ fontWeight: 'bold', color: 'var(--primary)', whiteSpace: 'nowrap' }}>{formatRupiah(omzetTx.wedding)}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--primary)', opacity: 0.8, marginTop: '2px', whiteSpace: 'nowrap' }}>
+                      {formatPercent(omzetTx.total ? (omzetTx.wedding / omzetTx.total) * 100 : 0)}
+                    </div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Studio</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem', gap: '1rem' }}>
+                  <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Studio</span>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: 'bold', color: '#10b981' }}>{formatRupiah(stats.studio.totalPendapatan)}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#10b981', opacity: 0.8, marginTop: '2px' }}>{formatPercent(totalPendapatanAll ? (stats.studio.totalPendapatan / totalPendapatanAll) * 100 : 0)}</div>
+                    <div style={{ fontWeight: 'bold', color: '#10b981', whiteSpace: 'nowrap' }}>{formatRupiah(omzetTx.studio)}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#10b981', opacity: 0.8, marginTop: '2px', whiteSpace: 'nowrap' }}>
+                      {formatPercent(omzetTx.total ? (omzetTx.studio / omzetTx.total) * 100 : 0)}
+                    </div>
                   </div>
                 </div>
-                <div style={{ borderTop: '1px solid var(--border-glass)', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '0.25rem' }}>
-                  <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Total</span>
+                <div style={{ borderTop: '1px solid var(--border-glass)', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '0.25rem', gap: '1rem' }}>
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>Total Gabungan</span>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{formatRupiah(totalPendapatanAll)}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', opacity: 0.8, marginTop: '2px' }}>100.0%</div>
+                    <div style={{ fontWeight: 'bold', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{formatRupiah(omzetTx.total)}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', opacity: 0.8, marginTop: '2px', whiteSpace: 'nowrap' }}>100.0%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* TOTAL PENDAPATAN AKTUAL */}
+            <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.1s' }}>
+              <div className="summary-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><DollarSign size={18}/> Total Pendapatan Aktual</div>
+              <div style={{ marginTop: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem', gap: '1rem' }}>
+                  <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Wedding</span>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontWeight: 'bold', color: 'var(--primary)', whiteSpace: 'nowrap' }}>{formatRupiah(stats.wedding.totalPendapatan)}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--primary)', opacity: 0.8, marginTop: '2px', whiteSpace: 'nowrap' }}>{formatPercent(totalPendapatanAll ? (stats.wedding.totalPendapatan / totalPendapatanAll) * 100 : 0)}</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem', gap: '1rem' }}>
+                  <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Studio</span>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontWeight: 'bold', color: '#10b981', whiteSpace: 'nowrap' }}>{formatRupiah(stats.studio.totalPendapatan)}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#10b981', opacity: 0.8, marginTop: '2px', whiteSpace: 'nowrap' }}>{formatPercent(totalPendapatanAll ? (stats.studio.totalPendapatan / totalPendapatanAll) * 100 : 0)}</div>
+                  </div>
+                </div>
+                <div style={{ borderTop: '1px solid var(--border-glass)', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '0.25rem', gap: '1rem' }}>
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>Total</span>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontWeight: 'bold', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{formatRupiah(totalPendapatanAll)}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', opacity: 0.8, marginTop: '2px', whiteSpace: 'nowrap' }}>100.0%</div>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* GROSS PROFIT */}
-            <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.1s' }}>
+            <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.2s' }}>
               <div className="summary-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Scale size={18}/> Gross Profit</div>
               <div style={{ marginTop: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Wedding</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem', gap: '1rem' }}>
+                  <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Wedding</span>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{formatRupiah(stats.wedding.grossProfit)}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--primary)', opacity: 0.8, marginTop: '2px' }}>{formatPercent((stats.wedding.grossProfit + stats.studio.grossProfit) ? (stats.wedding.grossProfit / (stats.wedding.grossProfit + stats.studio.grossProfit)) * 100 : 0)}</div>
+                    <div style={{ fontWeight: 'bold', color: 'var(--primary)', whiteSpace: 'nowrap' }}>{formatRupiah(stats.wedding.grossProfit)}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--primary)', opacity: 0.8, marginTop: '2px', whiteSpace: 'nowrap' }}>{formatPercent((stats.wedding.grossProfit + stats.studio.grossProfit) ? (stats.wedding.grossProfit / (stats.wedding.grossProfit + stats.studio.grossProfit)) * 100 : 0)}</div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Studio</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem', gap: '1rem' }}>
+                  <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Studio</span>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: 'bold', color: '#10b981' }}>{formatRupiah(stats.studio.grossProfit)}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#10b981', opacity: 0.8, marginTop: '2px' }}>{formatPercent((stats.wedding.grossProfit + stats.studio.grossProfit) ? (stats.studio.grossProfit / (stats.wedding.grossProfit + stats.studio.grossProfit)) * 100 : 0)}</div>
+                    <div style={{ fontWeight: 'bold', color: '#10b981', whiteSpace: 'nowrap' }}>{formatRupiah(stats.studio.grossProfit)}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#10b981', opacity: 0.8, marginTop: '2px', whiteSpace: 'nowrap' }}>{formatPercent((stats.wedding.grossProfit + stats.studio.grossProfit) ? (stats.studio.grossProfit / (stats.wedding.grossProfit + stats.studio.grossProfit)) * 100 : 0)}</div>
                   </div>
                 </div>
-                <div style={{ borderTop: '1px solid var(--border-glass)', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '0.25rem' }}>
-                  <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Total</span>
+                <div style={{ borderTop: '1px solid var(--border-glass)', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '0.25rem', gap: '1rem' }}>
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>Total</span>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{formatRupiah(stats.wedding.grossProfit + stats.studio.grossProfit)}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', opacity: 0.8, marginTop: '2px' }}>100.0%</div>
+                    <div style={{ fontWeight: 'bold', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{formatRupiah(stats.wedding.grossProfit + stats.studio.grossProfit)}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', opacity: 0.8, marginTop: '2px', whiteSpace: 'nowrap' }}>100.0%</div>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* NET PROFIT */}
-            <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.2s' }}>
+            <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.3s' }}>
               <div className="summary-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><TrendingUp size={18}/> Net Profit</div>
               <div style={{ marginTop: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Wedding</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem', gap: '1rem' }}>
+                  <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Wedding</span>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{formatRupiah(stats.wedding.netProfit)}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--primary)', opacity: 0.8, marginTop: '2px' }}>{formatPercent((stats.wedding.netProfit + stats.studio.netProfit) ? (stats.wedding.netProfit / (stats.wedding.netProfit + stats.studio.netProfit)) * 100 : 0)}</div>
+                    <div style={{ fontWeight: 'bold', color: 'var(--primary)', whiteSpace: 'nowrap' }}>{formatRupiah(stats.wedding.netProfit)}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--primary)', opacity: 0.8, marginTop: '2px', whiteSpace: 'nowrap' }}>{formatPercent((stats.wedding.netProfit + stats.studio.netProfit) ? (stats.wedding.netProfit / (stats.wedding.netProfit + stats.studio.netProfit)) * 100 : 0)}</div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Studio</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem', gap: '1rem' }}>
+                  <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Studio</span>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: 'bold', color: '#10b981' }}>{formatRupiah(stats.studio.netProfit)}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#10b981', opacity: 0.8, marginTop: '2px' }}>{formatPercent((stats.wedding.netProfit + stats.studio.netProfit) ? (stats.studio.netProfit / (stats.wedding.netProfit + stats.studio.netProfit)) * 100 : 0)}</div>
+                    <div style={{ fontWeight: 'bold', color: '#10b981', whiteSpace: 'nowrap' }}>{formatRupiah(stats.studio.netProfit)}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#10b981', opacity: 0.8, marginTop: '2px', whiteSpace: 'nowrap' }}>{formatPercent((stats.wedding.netProfit + stats.studio.netProfit) ? (stats.studio.netProfit / (stats.wedding.netProfit + stats.studio.netProfit)) * 100 : 0)}</div>
                   </div>
                 </div>
-                <div style={{ borderTop: '1px solid var(--border-glass)', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '0.25rem' }}>
-                  <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Total</span>
+                <div style={{ borderTop: '1px solid var(--border-glass)', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '0.25rem', gap: '1rem' }}>
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>Total</span>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{formatRupiah(stats.wedding.netProfit + stats.studio.netProfit)}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', opacity: 0.8, marginTop: '2px' }}>100.0%</div>
+                    <div style={{ fontWeight: 'bold', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{formatRupiah(stats.wedding.netProfit + stats.studio.netProfit)}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', opacity: 0.8, marginTop: '2px', whiteSpace: 'nowrap' }}>100.0%</div>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* NET MARGIN */}
-            <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.3s' }}>
+            <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.4s' }}>
               <div className="summary-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Activity size={18}/> Net Margin</div>
               <div style={{ marginTop: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Wedding</span>
-                  <span style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{formatPercent(stats.wedding.netMargin)}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', gap: '1rem' }}>
+                  <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Wedding</span>
+                  <span style={{ fontWeight: 'bold', color: 'var(--primary)', whiteSpace: 'nowrap' }}>{formatPercent(stats.wedding.netMargin)}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Studio</span>
-                  <span style={{ fontWeight: 'bold', color: '#10b981' }}>{formatPercent(stats.studio.netMargin)}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', gap: '1rem' }}>
+                  <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Studio</span>
+                  <span style={{ fontWeight: 'bold', color: '#10b981', whiteSpace: 'nowrap' }}>{formatPercent(stats.studio.netMargin)}</span>
                 </div>
-                <div style={{ borderTop: '1px solid var(--border-glass)', paddingTop: '0.5rem', display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem' }}>
-                  <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Rata-rata</span>
-                  <span style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{formatPercent(totalNetMarginAll)}</span>
+                <div style={{ borderTop: '1px solid var(--border-glass)', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem', gap: '1rem' }}>
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>Rata-rata</span>
+                  <span style={{ fontWeight: 'bold', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{formatPercent(totalNetMarginAll)}</span>
                 </div>
               </div>
             </div>
 
             {/* CASH FLOW */}
-            <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.4s' }}>
+            <div className="summary-card glass-card animate-stagger" style={{ animationDelay: '0.5s' }}>
               <div className="summary-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Wallet size={18}/> Cash Flow Saldo</div>
               <div style={{ marginTop: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Wedding</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem', gap: '1rem' }}>
+                  <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Wedding</span>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{formatRupiah(stats.wedding.cashFlow)}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--primary)', opacity: 0.8, marginTop: '2px' }}>{formatPercent((stats.wedding.cashFlow + stats.studio.cashFlow) ? (stats.wedding.cashFlow / (stats.wedding.cashFlow + stats.studio.cashFlow)) * 100 : 0)}</div>
+                    <div style={{ fontWeight: 'bold', color: 'var(--primary)', whiteSpace: 'nowrap' }}>{formatRupiah(stats.wedding.cashFlow)}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--primary)', opacity: 0.8, marginTop: '2px', whiteSpace: 'nowrap' }}>{formatPercent((stats.wedding.cashFlow + stats.studio.cashFlow) ? (stats.wedding.cashFlow / (stats.wedding.cashFlow + stats.studio.cashFlow)) * 100 : 0)}</div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                  <span style={{ color: 'var(--text-muted)' }}>Studio</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem', gap: '1rem' }}>
+                  <span style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Studio</span>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: 'bold', color: '#10b981' }}>{formatRupiah(stats.studio.cashFlow)}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#10b981', opacity: 0.8, marginTop: '2px' }}>{formatPercent((stats.wedding.cashFlow + stats.studio.cashFlow) ? (stats.studio.cashFlow / (stats.wedding.cashFlow + stats.studio.cashFlow)) * 100 : 0)}</div>
+                    <div style={{ fontWeight: 'bold', color: '#10b981', whiteSpace: 'nowrap' }}>{formatRupiah(stats.studio.cashFlow)}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#10b981', opacity: 0.8, marginTop: '2px', whiteSpace: 'nowrap' }}>{formatPercent((stats.wedding.cashFlow + stats.studio.cashFlow) ? (stats.studio.cashFlow / (stats.wedding.cashFlow + stats.studio.cashFlow)) * 100 : 0)}</div>
                   </div>
                 </div>
-                <div style={{ borderTop: '1px solid var(--border-glass)', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '0.25rem' }}>
-                  <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Total</span>
+                <div style={{ borderTop: '1px solid var(--border-glass)', paddingTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginTop: '0.25rem', gap: '1rem' }}>
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>Total</span>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: 'bold', color: 'var(--text-primary)' }}>{formatRupiah(stats.wedding.cashFlow + stats.studio.cashFlow)}</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', opacity: 0.8, marginTop: '2px' }}>100.0%</div>
+                    <div style={{ fontWeight: 'bold', color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>{formatRupiah(stats.wedding.cashFlow + stats.studio.cashFlow)}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-primary)', opacity: 0.8, marginTop: '2px', whiteSpace: 'nowrap' }}>100.0%</div>
                   </div>
                 </div>
               </div>
@@ -409,9 +488,9 @@ const ConsolidateDashboard = () => {
           </div>
 
           <div className="charts-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
-            {/* PIE CHART REVENUE */}
+            {/* PIE CHART PENDAPATAN AKTUAL */}
             <div className="chart-card glass-panel animate-stagger" style={{ animationDelay: '0.4s' }}>
-              <div className="chart-header">Komposisi Revenue</div>
+              <div className="chart-header">Komposisi Pendapatan Aktual</div>
               <div style={{ width: '100%', height: 400 }}>
                 <ResponsiveContainer>
                   <PieChart>
